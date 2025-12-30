@@ -207,3 +207,31 @@ class UserDAO:
             return None
         finally:
             self.db.disconnect()
+    
+    def get_user_by_phone(self, phone):
+        """
+        根据手机号查询用户信息
+        
+        Args:
+            phone: 手机号
+            
+        Returns:
+            tuple: 如果查询成功返回用户信息元组，否则返回None
+        """
+        UserDAO.logger.info(f"根据手机号查询用户信息: {phone}")
+        try:
+            if self.db.connect():
+                select_query = "SELECT * FROM user WHERE phone = %s"
+                if self.db.execute(select_query, (phone,)):
+                    user = self.db.cur.fetchone()
+                    if user:
+                        UserDAO.logger.info(f"查询到手机号={phone}的用户信息")
+                        return user
+                    else:
+                        UserDAO.logger.info(f"未查询到手机号={phone}的用户信息")
+                        return None
+        except Exception as e:
+            UserDAO.logger.error(f"查询手机号={phone}的用户信息时发生错误: {e}")
+            return None
+        finally:
+            self.db.disconnect()

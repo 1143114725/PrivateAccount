@@ -28,7 +28,7 @@
 PyCharmMiscProject/
 ├── app.py                 # 项目入口文件
 ├── api/                   # API路由层
-│   └── routes.py          # 路由配置文件
+│   └── user.py            # 用户相关路由配置文件
 ├── config/                # 配置文件
 ├── dao/                   # 数据访问层
 ├── db/                    # 数据库连接管理
@@ -97,7 +97,6 @@ python app.py
     "id": 1,
     "username": "test_user",
     "phone": "13800138000",
-    "registration": 1766145874849,
     "enable": true,
     "token": "d0ec5125b5c858fe912dd48918585a49",
     "token_expiration_time": 1766750674874
@@ -119,7 +118,12 @@ python app.py
 {
   "errorcode": 200,
   "message": "注册成功",
-  "data": null
+  "data": {
+    "id": 1,
+    "username": "test_user",
+    "phone": "13800138000",
+    "registration": 1766145874849
+  }
 }
 ```
 
@@ -266,7 +270,7 @@ python app.py
 
 #### 3.1 新增消费类型接口
 
-**URL**: `/api/consumption`
+**URL**: `/api/expendtype`
 **方法**: `POST`
 **请求头**:
 - `token`: 用户认证令牌
@@ -293,7 +297,7 @@ python app.py
 
 #### 3.2 修改消费类型接口
 
-**URL**: `/api/consumption`
+**URL**: `/api/expendtype`
 **方法**: `PUT`
 **请求头**:
 - `token`: 用户认证令牌
@@ -321,7 +325,7 @@ python app.py
 
 #### 3.3 删除消费类型接口
 
-**URL**: `/api/consumption`
+**URL**: `/api/expendtype`
 **方法**: `DELETE`
 **请求头**:
 - `token`: 用户认证令牌
@@ -341,7 +345,7 @@ python app.py
 
 #### 3.4 查询消费类型接口
 
-**URL**: `/api/consumption`
+**URL**: `/api/expendtype`
 **方法**: `GET`
 **请求头**:
 - `token`: 用户认证令牌

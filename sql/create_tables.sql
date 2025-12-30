@@ -48,9 +48,6 @@ CREATE TABLE IF NOT EXISTS `expend` (
 	PRIMARY KEY(`id`)
 ) COMMENT='支出表';
 
-
-CREATE INDEX `expend_index_0`
-ON `expend` (`id`);
 CREATE TABLE IF NOT EXISTS `expend_type` (
 	`id` BIGINT NOT NULL AUTO_INCREMENT UNIQUE,
 	`expend_type_name` VARCHAR(255) COMMENT '消费类型说明',

@@ -83,10 +83,19 @@ class UserService:
         # 调用DAO进行注册
         if self.user_dao.register_user(username, encrypted_password, phone, registration_time):
             UserService.logger.info(f"用户注册成功: {username} ({phone})")
-            return True, "注册成功"
+            
+            # 注册成功后获取用户信息
+            user = self.user_dao.get_user_by_phone(phone)
+            if user:
+                # 返回用户信息：id, username, phone, registration
+                UserService.logger.info(f"获取注册用户信息成功 - 用户ID: {user[0]}")
+                return True, "注册成功", (user[0], user[1], user[3], user[6])
+            else:
+                UserService.logger.error(f"用户注册成功但无法获取用户信息: {username} ({phone})")
+                return True, "注册成功但无法获取用户信息", None
         else:
             UserService.logger.error(f"用户注册失败: {username} ({phone})")
-            return False, "注册失败: 无法插入用户信息"
+            return False, "注册失败: 无法插入用户信息", None
     
     def login(self, username=None, password=None, phone=None):
         """

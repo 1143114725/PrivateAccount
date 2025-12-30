@@ -3,7 +3,7 @@ from services.UserService import UserService
 from utils.LogUtils import LogUtils
 from models.user_model import LoginResponseModel, RegisterResponseModel, UserInfoModel
 from .account import setup_account_routes
-from .consumption import setup_consumption_routes
+from .expendtype import setup_expendtype_routes
 
 # 初始化API日志记录器
 api_logger = LogUtils.get_instance('API')
@@ -18,7 +18,7 @@ def setup_routes(app):
     setup_account_routes(app)
     
     # 设置消费类型相关路由
-    setup_consumption_routes(app)
+    setup_expendtype_routes(app)
     
     @app.route("/login", methods=["POST"])  # 改为POST方法更安全
     def login():
@@ -87,11 +87,11 @@ def setup_routes(app):
 
         try:
             # 调用UserService的register方法
-            success, message = user_service.register(username, password, phone)
+            success, message, user_info = user_service.register(username, password, phone)
             
             if success:
                 # 使用RegisterResponseModel构建成功响应，200表示成功
-                register_response = RegisterResponseModel(errorcode=200, message=message)
+                register_response = RegisterResponseModel(errorcode=200, message=message, user_info=user_info)
                 return jsonify(register_response.to_dict()), 200
             else:
                 # 使用RegisterResponseModel构建失败响应，400表示请求错误
@@ -104,5 +104,21 @@ def setup_routes(app):
             # 使用RegisterResponseModel构建异常响应，500表示服务器错误
             register_response = RegisterResponseModel(errorcode=500, message=f"注册失败: {str(e)}")
             return jsonify(register_response.to_dict()), 500
+    
+    @app.route("/health", methods=["GET"])  # 健康检查端点
+    def health_check():
+        api_logger.info("健康检查路由被调用")
+        try:
+            # 检查数据库连接
+            from db.Database import Database
+            db = Database()
+            if db.connect():
+                db.close()
+                return jsonify({"status": "ok", "message": "Service is healthy", "db_status": "connected"}), 200
+            else:
+                return jsonify({"status": "error", "message": "Database connection failed"}), 500
+        except Exception as e:
+            api_logger.error(f"健康检查过程中发生错误: {e}")
+            return jsonify({"status": "error", "message": f"Service error: {str(e)}"}), 500
     
     api_logger.info("API路由配置完成")
