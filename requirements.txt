@@ -1,0 +1,6 @@
+Flask>=2.0.0
+pymysql>=1.0.0
+DBUtils>=3.0.0
+configparser>=5.0.0
+PyYAML>=6.0  # 支持YAML格式
+toml>=0.10.0  # 支持TOML格式
