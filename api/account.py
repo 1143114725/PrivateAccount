@@ -112,12 +112,14 @@ def setup_account_routes(app):
                 api_logger.warning("添加账户失败: 账户名不能为空")
                 return jsonify({"errorcode": 400, "message": "账户名不能为空", "data": None}), 400
             
-            # 转换余额为整数
+            # 转换余额为小数（自动截取两位小数）
             try:
-                balance = int(balance)
+                balance = float(balance)
+                # 自动截取两位小数
+                balance = round(balance, 2)
             except ValueError:
-                api_logger.warning(f"添加账户失败: 余额不是有效的整数 - {balance}")
-                return jsonify({"errorcode": 400, "message": "余额必须是有效的整数", "data": None}), 400
+                api_logger.warning(f"添加账户失败: 余额不是有效的数字 - {balance}")
+                return jsonify({"errorcode": 400, "message": "余额必须是有效的数字", "data": None}), 400
             
             # 调用AccountService的create_account方法
             success, message, account = account_service.create_account(user_id, account_name, balance)
@@ -173,12 +175,14 @@ def setup_account_routes(app):
                 api_logger.warning("修改账户余额失败: 新余额不能为空")
                 return jsonify({"errorcode": 400, "message": "新余额不能为空", "data": None}), 400
             
-            # 转换余额为整数
+            # 转换余额为小数（自动截取两位小数）
             try:
-                new_balance = int(new_balance)
+                new_balance = float(new_balance)
+                # 自动截取两位小数
+                new_balance = round(new_balance, 2)
             except ValueError:
-                api_logger.warning(f"修改账户余额失败: 新余额不是有效的整数 - {new_balance}")
-                return jsonify({"errorcode": 400, "message": "新余额必须是有效的整数", "data": None}), 400
+                api_logger.warning(f"修改账户余额失败: 新余额不是有效的数字 - {new_balance}")
+                return jsonify({"errorcode": 400, "message": "新余额必须是有效的数字", "data": None}), 400
             
             # 检查账户是否存在且属于该用户
             account = account_service.get_account_by_id(account_id)[2]

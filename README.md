@@ -139,7 +139,7 @@ python app.py
 
 **参数**:
 - `account_name` (必须): 账户名称
-- `balance` (可选): 账户余额，默认为0
+- `balance` (可选): 账户余额，默认为0。支持任意有效的数字输入，系统将自动截断到两位小数
 
 **返回格式**:
 ```json
@@ -149,7 +149,7 @@ python app.py
   "data": {
     "id": 1,
     "name": "银行卡",
-    "balance": 1000,
+    "balance": 1000.00,
     "create_time": 1766145874849,
     "update_time": 1766145874849,
     "enable": true
@@ -167,7 +167,7 @@ python app.py
 
 **参数**:
 - `account_id` (必须): 账户ID
-- `new_balance` (必须): 新的账户余额
+- `new_balance` (必须): 新的账户余额。支持任意有效的数字输入，系统将自动截断到两位小数
 
 **返回格式**:
 ```json
@@ -177,7 +177,7 @@ python app.py
   "data": {
     "id": 1,
     "name": "银行卡",
-    "balance": 2000,
+    "balance": 2000.50,
     "create_time": 1766145874849,
     "update_time": 1766146874849,
     "enable": true
@@ -222,7 +222,7 @@ python app.py
     {
       "id": 1,
       "name": "银行卡",
-      "balance": 1000,
+      "balance": 1000.25,
       "create_time": 1766145874849,
       "update_time": 1766145874849,
       "enable": true
@@ -230,7 +230,7 @@ python app.py
     {
       "id": 2,
       "name": "支付宝",
-      "balance": 500,
+      "balance": 500.75,
       "create_time": 1766145874849,
       "update_time": 1766145874849,
       "enable": true
@@ -258,7 +258,7 @@ python app.py
   "data": {
     "id": 1,
     "name": "银行卡",
-    "balance": 1000,
+    "balance": 1000.00,
     "create_time": 1766145874849,
     "update_time": 1766145874849,
     "enable": true

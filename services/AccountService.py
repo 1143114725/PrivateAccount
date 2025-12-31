@@ -16,7 +16,7 @@ class AccountService:
         AccountService.logger.info("初始化AccountService")
         self.account_dao = AccountDAO()
     
-    def create_account(self, user_id, account_name, balance=0):
+    def create_account(self, user_id, account_name, balance=0.0):
         """
         创建新账户业务逻辑
         
