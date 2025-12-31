@@ -1,16 +1,20 @@
-# Flask用户认证API服务
+# 个人财务管理系统API
 
-一个基于Flask框架开发的用户认证API服务，提供用户注册和登录功能，使用统一的API响应模型和错误码系统。
+一个基于Flask框架开发的个人财务管理系统API，提供用户认证、账户管理和消费类型管理等功能，使用统一的API响应模型和错误码系统。
 
 ## 功能特性
 
 - ✅ 用户注册功能
 - ✅ 用户登录功能（支持用户名或手机号登录）
+- ✅ 用户账号注销功能
 - ✅ JWT Token认证机制
 - ✅ 统一的API响应模型
 - ✅ 错误码系统（200-成功，201-token过期，400-请求错误，401-未授权等）
 - ✅ 完善的日志系统
 - ✅ 数据库连接池管理
+- ✅ 账户管理（添加、修改余额、删除、查询）
+- ✅ 消费类型管理（新增、修改、删除、查询）
+- ✅ 余额支持两位小数精度，自动截断处理
 - ✅ 单元测试和集成测试
 
 ## 技术栈
@@ -20,32 +24,56 @@
 - **ORM**: 原生SQL（使用自定义数据库连接池）
 - **日志**: 自定义日志工具
 - **认证**: JWT Token
-- **测试**: Python单元测试
+- **测试**: Pytest
 
 ## 项目结构
 
 ```
-PyCharmMiscProject/
+PrivateAccount/
 ├── app.py                 # 项目入口文件
 ├── api/                   # API路由层
-│   └── user.py            # 用户相关路由配置文件
+│   ├── user.py            # 用户相关路由配置文件
+│   ├── account.py         # 账户管理路由配置文件
+│   └── expendtype.py      # 消费类型路由配置文件
 ├── config/                # 配置文件
+│   ├── DateBaseConfig.ini # 数据库配置
+│   └── LogConfig.ini      # 日志配置
 ├── dao/                   # 数据访问层
+│   ├── UserDAO.py         # 用户数据访问对象
+│   ├── AccountDAO.py      # 账户数据访问对象
+│   └── ExpendTypeDAO.py   # 消费类型数据访问对象
 ├── db/                    # 数据库连接管理
+│   └── Database.py        # 数据库连接管理
 ├── logs/                  # 日志文件目录
 ├── models/                # 数据模型层
-│   ├── base_model.py      # 基础模型类
-│   └── user_model.py      # 用户相关模型
+│   ├── BaseModel.py       # 基础模型类
+│   ├── UserModel.py       # 用户相关模型
+│   ├── AccountModel.py    # 账户相关模型
+│   └── expendtypemodel.py # 消费类型相关模型
 ├── services/              # 业务逻辑层
-│   └── UserService.py     # 用户服务类
+│   ├── UserService.py     # 用户服务类
+│   ├── AccountService.py  # 账户服务类
+│   └── ExpendTypeService.py # 消费类型服务类
 ├── sql/                   # SQL脚本文件
+│   ├── create_tables.sql  # 创建表结构脚本
+│   └── init_db.py         # 初始化数据库脚本
 ├── test/                  # 测试代码
-│   ├── test_models.py     # 模型测试
-│   └── test_user_service.py # 用户服务测试
+│   ├── api/               # API测试
+│   ├── dao/               # DAO层测试
+│   ├── services/          # 服务层测试
+│   ├── utils/             # 工具类测试
+│   └── conftest.py        # 测试配置文件
 ├── utils/                 # 工具函数
-│   └── LogUtils.py        # 日志工具类
-├── requirements.txt       # 项目依赖
-└── README.md              # 项目文档
+│   ├── ConfigManager.py   # 配置管理工具
+│   ├── LogUtils.py        # 日志工具类
+│   ├── MD5Utils.py        # MD5加密工具
+│   ├── TokenUtils.py      # Token生成与验证工具
+│   └── db_pool.py         # 数据库连接池
+├── .coverage              # 测试覆盖率文件
+├── README.md              # 项目文档
+├── app.py                 # 应用入口
+├── pytest.ini             # Pytest配置文件
+└── requirements.txt       # 项目依赖
 ```
 
 ## 安装和运行
@@ -64,8 +92,8 @@ pip install -r requirements.txt
 ### 3. 配置数据库
 
 1. 创建MySQL数据库
-2. 执行`sql/`目录下的SQL脚本创建用户表
-3. 配置数据库连接信息（在`db/`目录下的配置文件）
+2. 执行`sql/create_tables.sql`脚本创建表结构
+3. 配置数据库连接信息（在`config/DateBaseConfig.ini`文件中）
 
 ### 4. 启动服务
 
@@ -124,6 +152,26 @@ python app.py
     "phone": "13800138000",
     "registration": 1766145874849
   }
+}
+```
+
+#### 1.3 注销账号接口
+
+**URL**: `/api/user/delete`
+**方法**: `DELETE`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `user_id` (必须): 用户ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "账户注销成功",
+  "data": null
 }
 ```
 
@@ -352,7 +400,7 @@ python app.py
 - `userid`: 用户ID
 
 **查询参数**:
-- `id` (可选): 消费类型ID，如果不传id则查询所有消费类型
+- `id` (可选): 消费类型ID，如果不传id或id为空则查询所有消费类型
 
 **返回格式**:
 
@@ -361,13 +409,15 @@ python app.py
 {
   "errorcode": 200,
   "message": "查询消费类型成功",
-  "data": {
-    "id": 1,
-    "name": "餐饮",
-    "create_time": 1766145874849,
-    "update_time": 1766145874849,
-    "enable": true
-  }
+  "data": [
+    {
+      "id": 1,
+      "name": "餐饮",
+      "create_time": 1766145874849,
+      "update_time": 1766145874849,
+      "enable": true
+    }
+  ]
 }
 ```
 
@@ -419,16 +469,23 @@ python app.py
 
 ## 测试
 
-### 运行模型测试
+### 运行所有测试
 
 ```bash
-python test/test_models.py
+python -m pytest
 ```
 
-### 运行用户服务测试
+### 运行特定模块测试
 
 ```bash
-python test/test_user_service.py
+# 运行API测试
+python -m pytest test/api/
+
+# 运行服务层测试
+python -m pytest test/services/
+
+# 运行DAO层测试
+python -m pytest test/dao/
 ```
 
 ## 开发说明
@@ -437,17 +494,9 @@ python test/test_user_service.py
 
 项目使用统一的基础模型类`BaseModel`，所有API响应模型都继承自该类。
 
-```python
-class BaseModel:
-    def __init__(self, errorcode: int, message: str = "", data: any = None):
-        self.errorcode = errorcode
-        self.message = message
-        self.data = data
-```
-
 ### 服务层设计
 
-业务逻辑封装在服务层，遵循单一职责原则，例如`UserService`负责用户相关的业务逻辑。
+业务逻辑封装在服务层，遵循单一职责原则，例如`UserService`负责用户相关的业务逻辑，`AccountService`负责账户相关的业务逻辑。
 
 ### 日志系统
 
@@ -455,17 +504,18 @@ class BaseModel:
 
 ## 安全考虑
 
-- 密码使用加密存储
+- 密码使用MD5加密存储
 - 登录接口使用POST方法，避免敏感信息暴露在URL中
 - 使用JWT Token进行身份认证
 - 实现了Token过期机制
+- 敏感操作需要Token验证
 
 ## 许可证
 
 MIT License
 ## 作者
 
-Flask用户认证API服务开发团队
+个人财务管理系统开发团队
 
 
 

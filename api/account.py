@@ -3,7 +3,7 @@ from services.AccountService import AccountService
 from services.UserService import UserService
 from utils.LogUtils import LogUtils
 from utils.TokenUtils import TokenUtils
-from models.account_model import AccountInfoModel, AccountResponseModel, AccountsResponseModel
+from models.AccountModel import AccountInfoModel, AccountResponseModel, AccountsResponseModel
 from functools import wraps
 import time
 

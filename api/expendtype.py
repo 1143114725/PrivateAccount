@@ -225,12 +225,17 @@ def setup_expendtype_routes(app):
     def getexpendtypes():
         """
         查询消费类型接口
-        查询参数：id（可选），如果不传id则查询所有消费类型
+        查询参数：id（可选），如果不传id或id为空则查询所有消费类型
+        无论是否传入id，都返回数组格式
         """
         api_logger.info("查询消费类型路由被调用")
         
         # 从查询参数中获取参数
         expend_type_id_str = request.args.get("id", None)
+        
+        # 处理id参数为空的情况，与不传递id时的处理逻辑一致
+        if expend_type_id_str == "":
+            expend_type_id_str = None
         
         # 记录请求信息
         api_logger.info(f"收到查询消费类型请求 - id: {expend_type_id_str}")
@@ -249,14 +254,15 @@ def setup_expendtype_routes(app):
                 
                 if success:
                     api_logger.info(f"查询单个消费类型成功 - expend_type_id: {expend_type_id}")
-                    # 使用ExpendTypeInfoModel处理消费类型信息
+                    # 使用ExpendTypeInfoModel处理消费类型信息，并包装成数组
                     expend_type_info = ExpendTypeInfoModel(expend_type)
-                    # 使用ExpendTypeResponseModel构建响应
-                    response = ExpendTypeResponseModel(errorcode=200, message=message, expend_type=expend_type_info)
+                    expend_type_infos = [expend_type_info]
+                    # 使用ExpendTypesResponseModel构建响应
+                    response = ExpendTypesResponseModel(errorcode=200, message=message, expend_types=expend_type_infos)
                     return jsonify(response.to_dict()), 200
                 else:
                     api_logger.error(f"查询单个消费类型失败 - {message}")
-                    response = ExpendTypeResponseModel(errorcode=404, message=message)
+                    response = ExpendTypesResponseModel(errorcode=404, message=message)
                     return jsonify(response.to_dict()), 404
             else:
                 # 查询所有消费类型

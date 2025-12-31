@@ -1,5 +1,5 @@
 from typing import Optional, List
-from models.base_model import BaseModel
+from models.BaseModel import BaseModel
 
 
 class AccountInfoModel:

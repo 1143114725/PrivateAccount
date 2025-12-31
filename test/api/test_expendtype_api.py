@@ -354,8 +354,10 @@ def test_getexpendtype_success(
     data = json.loads(response.data)
     assert data['errorcode'] == 200
     assert "成功" in data['message']
-    assert data['data']['id'] == 1
-    assert data['data']['expend_type_name'] == '餐饮'
+    assert isinstance(data['data'], list)  # 验证返回的是数组
+    assert len(data['data']) == 1  # 验证数组包含一个元素
+    assert data['data'][0]['id'] == 1
+    assert data['data'][0]['expend_type_name'] == '餐饮'
     
     # 验证Service调用
     mock_expend_type_service.get_expend_type_by_id.assert_called_once_with(1)

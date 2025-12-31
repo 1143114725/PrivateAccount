@@ -235,3 +235,33 @@ class UserDAO:
             return None
         finally:
             self.db.disconnect()
+    
+    def delete_user(self, user_id):
+        """
+        根据用户ID删除用户
+        
+        Args:
+            user_id: 用户ID
+            
+        Returns:
+            bool: 如果删除成功返回True，否则返回False
+        """
+        UserDAO.logger.info(f"根据用户ID删除用户: {user_id}")
+        try:
+            if self.db.connect():
+                delete_query = "DELETE FROM user WHERE id = %s"
+                if self.db.execute(delete_query, (user_id,)):
+                    self.db.commit()
+                    UserDAO.logger.info(f"用户ID={user_id}删除成功")
+                    return True
+                else:
+                    self.db.rollback()
+                    UserDAO.logger.error(f"用户ID={user_id}删除失败: 无法执行删除操作")
+                    return False
+        except Exception as e:
+            UserDAO.logger.error(f"删除用户ID={user_id}时发生错误: {e}")
+            if self.db.cur:
+                self.db.rollback()
+            return False
+        finally:
+            self.db.disconnect()

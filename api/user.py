@@ -1,15 +1,73 @@
 from flask import request, jsonify, Response
+from functools import wraps
 from services.UserService import UserService
 from utils.LogUtils import LogUtils
-from models.user_model import LoginResponseModel, RegisterResponseModel, UserInfoModel
+from utils.TokenUtils import TokenUtils
+from models.UserModel import LoginResponseModel, RegisterResponseModel, UserInfoModel
 from .account import setup_account_routes
 from .expendtype import setup_expendtype_routes
+import time
 
 # 初始化API日志记录器
 api_logger = LogUtils.get_instance('API')
 
 # 创建UserService实例
 user_service = UserService()
+
+# 鉴权装饰器
+def token_required(f):
+    """
+    验证token的装饰器
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        # 从header中获取token和user_id
+        token = request.headers.get('token', '').strip()
+        user_id_header = request.headers.get('userid', '').strip()
+        
+        # 确保token是字符串类型
+        token = str(token)
+        
+        api_logger.info(f"开始token验证 - token: {token[:10]}..., user_id_header: {user_id_header}")
+        
+        # 验证token和user_id是否存在
+        if not token:
+            api_logger.warning("token验证失败: token为空")
+            return jsonify({"errorcode": 401, "message": "未提供token", "data": None}), 401
+        
+        if not user_id_header:
+            api_logger.warning("token验证失败: userid为空")
+            return jsonify({"errorcode": 401, "message": "未提供userid", "data": None}), 401
+        
+        try:
+            user_id = int(user_id_header)
+        except ValueError:
+            api_logger.warning("token验证失败: userid不是有效的整数")
+            return jsonify({"errorcode": 401, "message": "无效的userid", "data": None}), 401
+        
+        # 根据user_id查询用户信息
+        user = user_service.get_user_by_id(user_id)
+        if not user:
+            api_logger.warning(f"token验证失败: 用户不存在 - user_id: {user_id}")
+            return jsonify({"errorcode": 401, "message": "用户不存在", "data": None}), 401
+        
+        # 从user元组中获取token和过期时间
+        stored_token = user[4]  # refresh_token
+        token_expiration_time = user[5]  # token_expiration_time
+        
+        # 确保stored_token是字符串类型
+        if stored_token is not None:
+            stored_token = str(stored_token)
+        
+        # 验证token
+        if TokenUtils.validate_token(token, stored_token, token_expiration_time):
+            api_logger.info("token验证成功")
+            return f(*args, **kwargs)
+        else:
+            api_logger.warning("token验证失败: token无效或已过期")
+            return jsonify({"errorcode": 401, "message": "无效或已过期的token", "data": None}), 401
+    
+    return decorated
 
 def setup_routes(app):
     api_logger.info("开始配置API路由")
@@ -120,5 +178,36 @@ def setup_routes(app):
         except Exception as e:
             api_logger.error(f"健康检查过程中发生错误: {e}")
             return jsonify({"status": "error", "message": f"Service error: {str(e)}"}), 500
+    
+    @app.route("/api/delete_account", methods=["POST"])  # 注销账号接口
+    @token_required
+    def delete_user_account():
+        """
+        注销账号接口
+        请求头：token, userid
+        """
+        api_logger.info("注销账号路由被调用")
+        
+        # 从请求头中获取user_id
+        user_id = int(request.headers.get('userid'))
+        
+        # 记录注销请求
+        api_logger.info(f"收到注销账号请求 - user_id: {user_id}")
+        
+        try:
+            # 调用UserService的delete_account方法
+            success, message = user_service.delete_account(user_id)
+            
+            if success:
+                api_logger.info(f"账号注销成功 - user_id: {user_id}")
+                return jsonify({"errorcode": 200, "message": message, "data": None}), 200
+            else:
+                api_logger.warning(f"账号注销失败 - user_id: {user_id}, message: {message}")
+                return jsonify({"errorcode": 400, "message": message, "data": None}), 400
+        except Exception as e:
+            api_logger.error(f"注销账号过程中发生错误: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({"errorcode": 500, "message": f"账号注销失败: {str(e)}", "data": None}), 500
     
     api_logger.info("API路由配置完成")

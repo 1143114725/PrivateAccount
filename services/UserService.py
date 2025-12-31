@@ -195,3 +195,34 @@ class UserService:
         except Exception as e:
             UserService.logger.error(f"查询用户时发生错误: {e}")
             return None
+    
+    def delete_account(self, user_id):
+        """
+        注销账号业务逻辑
+        
+        Args:
+            user_id: 用户ID
+            
+        Returns:
+            tuple: (是否成功, 消息)
+        """
+        UserService.logger.info(f"注销账号请求 - 用户ID: {user_id}")
+        
+        # 参数验证
+        if not user_id:
+            UserService.logger.warning("注销失败: 用户ID不能为空")
+            return False, "用户ID不能为空"
+        
+        # 检查用户是否存在
+        user = self.user_dao.get_user_by_id(user_id)
+        if not user:
+            UserService.logger.warning(f"注销失败: 用户不存在 - 用户ID: {user_id}")
+            return False, "用户不存在"
+        
+        # 调用DAO删除用户
+        if self.user_dao.delete_user(user_id):
+            UserService.logger.info(f"用户ID={user_id}注销成功")
+            return True, "账号注销成功"
+        else:
+            UserService.logger.error(f"用户ID={user_id}注销失败")
+            return False, "账号注销失败: 无法执行删除操作"

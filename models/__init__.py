@@ -1,5 +1,5 @@
-from .base_model import BaseModel
-from .user_model import UserInfoModel, LoginResponseModel, RegisterResponseModel
+from .BaseModel import BaseModel
+from .UserModel import UserInfoModel, LoginResponseModel, RegisterResponseModel
 
 __all__ = [
     "BaseModel",
