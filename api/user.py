@@ -6,6 +6,7 @@ from utils.TokenUtils import TokenUtils
 from models.UserModel import LoginResponseModel, RegisterResponseModel, UserInfoModel
 from .account import setup_account_routes
 from .expendtype import setup_expendtype_routes
+from .incometype import setup_incometype_routes
 import time
 
 # 初始化API日志记录器
@@ -77,6 +78,9 @@ def setup_routes(app):
     
     # 设置消费类型相关路由
     setup_expendtype_routes(app)
+    
+    # 设置收入类型相关路由
+    setup_incometype_routes(app)
     
     @app.route("/login", methods=["POST"])  # 改为POST方法更安全
     def login():

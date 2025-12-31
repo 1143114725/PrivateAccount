@@ -14,6 +14,7 @@
 - ✅ 数据库连接池管理
 - ✅ 账户管理（添加、修改余额、删除、查询）
 - ✅ 消费类型管理（新增、修改、删除、查询）
+- ✅ 收入类型管理（新增、修改、删除、查询）
 - ✅ 余额支持两位小数精度，自动截断处理
 - ✅ 单元测试和集成测试
 
@@ -34,14 +35,16 @@ PrivateAccount/
 ├── api/                   # API路由层
 │   ├── user.py            # 用户相关路由配置文件
 │   ├── account.py         # 账户管理路由配置文件
-│   └── expendtype.py      # 消费类型路由配置文件
+│   ├── expendtype.py      # 消费类型路由配置文件
+│   └── incometype.py      # 收入类型路由配置文件
 ├── config/                # 配置文件
 │   ├── DateBaseConfig.ini # 数据库配置
 │   └── LogConfig.ini      # 日志配置
 ├── dao/                   # 数据访问层
 │   ├── UserDAO.py         # 用户数据访问对象
 │   ├── AccountDAO.py      # 账户数据访问对象
-│   └── ExpendTypeDAO.py   # 消费类型数据访问对象
+│   ├── ExpendTypeDAO.py   # 消费类型数据访问对象
+│   └── IncomeTypeDAO.py   # 收入类型数据访问对象
 ├── db/                    # 数据库连接管理
 │   └── Database.py        # 数据库连接管理
 ├── logs/                  # 日志文件目录
@@ -49,11 +52,13 @@ PrivateAccount/
 │   ├── BaseModel.py       # 基础模型类
 │   ├── UserModel.py       # 用户相关模型
 │   ├── AccountModel.py    # 账户相关模型
-│   └── expendtypemodel.py # 消费类型相关模型
+│   ├── expendtypemodel.py # 消费类型相关模型
+│   └── incometypemodel.py # 收入类型相关模型
 ├── services/              # 业务逻辑层
 │   ├── UserService.py     # 用户服务类
 │   ├── AccountService.py  # 账户服务类
-│   └── ExpendTypeService.py # 消费类型服务类
+│   ├── ExpendTypeService.py # 消费类型服务类
+│   └── IncomeTypeService.py # 收入类型服务类
 ├── sql/                   # SQL脚本文件
 │   ├── create_tables.sql  # 创建表结构脚本
 │   └── init_db.py         # 初始化数据库脚本
@@ -445,7 +450,132 @@ python app.py
 }
 ```
 
-## 错误码说明
+### 4. 收入类型模块
+
+#### 4.1 新增收入类型接口
+
+**URL**: `/api/incometype`
+**方法**: `POST`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `income_type_name` (必须): 收入类型名称
+- `enable` (可选): 是否启用，默认为True
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "收入类型新增成功",
+  "data": {
+    "id": 1,
+    "income_type_name": "工资",
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+#### 4.2 修改收入类型接口
+
+**URL**: `/api/incometype`
+**方法**: `PUT`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `id` (必须): 收入类型ID
+- `income_type_name` (可选): 收入类型名称
+- `enable` (可选): 是否启用
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "收入类型修改成功",
+  "data": {
+    "id": 1,
+    "income_type_name": "工资收入",
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+#### 4.3 删除收入类型接口
+
+**URL**: `/api/incometype`
+**方法**: `DELETE`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `id` (必须): 收入类型ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "收入类型删除成功",
+  "data": null
+}
+```
+
+#### 4.4 查询收入类型接口
+
+**URL**: `/api/incometype`
+**方法**: `GET`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**查询参数**:
+- `id` (可选): 收入类型ID，如果不传id或id为空则查询所有收入类型
+
+**返回格式**:
+
+查询单个收入类型：
+```json
+{
+  "errorcode": 200,
+  "message": "查询收入类型成功",
+  "data": [
+    {
+      "id": 1,
+      "income_type_name": "工资",
+      "create_time": "2024-01-01T00:00:00",
+      "enable": true
+    }
+  ]
+}
+```
+
+查询所有收入类型：
+```json
+{
+  "errorcode": 200,
+  "message": "查询收入类型成功",
+  "data": [
+    {
+      "id": 1,
+      "income_type_name": "工资",
+      "create_time": "2024-01-01T00:00:00",
+      "enable": true
+    },
+    {
+      "id": 2,
+      "income_type_name": "奖金",
+      "create_time": "2024-01-01T00:00:00",
+      "enable": true
+    }
+  ]
+}
+```
+
 
 | 错误码 | 描述 |
 |-------|------|
