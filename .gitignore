@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+logs/
+*.log
+
+# IDE directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# Virtual environments
+venv/
+.env/
+env/
+
+# Database
+*.db
+*.sqlite3
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Configuration files
+config/*.ini
+
+# Temporary files
+*.tmp
+*.temp
