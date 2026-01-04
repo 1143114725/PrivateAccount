@@ -101,20 +101,21 @@ def setup_income_routes(app):
             traceback.print_exc()
             return jsonify({"errorcode": 500, "message": f"新增收入记录失败: {str(e)}", "data": None}), 500
     
-    @app.route("/api/income/<int:id>", methods=["PUT"])
+    @app.route("/api/income", methods=["PUT"])
     @token_required
-    def update_income(id):
+    def update_income():
         """
         更新收入记录接口
         请求头：token, userid
-        请求体：money(可选), account_id(可选), remark(可选), income_time(可选), income_type_id(可选), enable(可选)
+        请求体：id, money(可选), account_id(可选), remark(可选), income_time(可选), income_type_id(可选), enable(可选)
         """
-        api_logger.info(f"更新收入记录路由被调用 - id: {id}")
+        api_logger.info("更新收入记录路由被调用")
         
         # 从请求头中获取user_id
         user_id = int(request.headers.get('userid'))
         
         # 从请求体中获取参数
+        id = request.form.get("id", None)
         money = request.form.get("money", None)
         account_id = request.form.get("account_id", None)
         remark = request.form.get("remark", None)
@@ -124,6 +125,15 @@ def setup_income_routes(app):
         
         # 记录更新收入请求
         api_logger.info(f"收到更新收入请求 - user_id: {user_id}, id: {id}, money: {money}, account_id: {account_id}, remark: {remark}, income_time: {income_time}, income_type_id: {income_type_id}, enable: {enable}")
+        
+        # 验证id参数
+        if not id:
+            return jsonify({"errorcode": 400, "message": "id参数不能为空", "data": None}), 400
+        
+        try:
+            id = int(id.strip())
+        except ValueError:
+            return jsonify({"errorcode": 400, "message": "id参数必须是数字", "data": None}), 400
         
         try:
             # 转换可选参数类型
@@ -182,20 +192,33 @@ def setup_income_routes(app):
             traceback.print_exc()
             return jsonify({"errorcode": 500, "message": f"更新收入记录失败: {str(e)}", "data": None}), 500
     
-    @app.route("/api/income/<int:id>", methods=["DELETE"])
+    @app.route("/api/income", methods=["DELETE"])
     @token_required
-    def delete_income(id):
+    def delete_income():
         """
         删除收入记录接口
         请求头：token, userid
+        请求体：id
         """
-        api_logger.info(f"删除收入记录路由被调用 - id: {id}")
+        api_logger.info("删除收入记录路由被调用")
         
         # 从请求头中获取user_id
         user_id = int(request.headers.get('userid'))
         
+        # 从请求体中获取id参数
+        id = request.form.get("id", None)
+        
         # 记录删除收入请求
         api_logger.info(f"收到删除收入请求 - user_id: {user_id}, id: {id}")
+        
+        # 验证id参数
+        if not id:
+            return jsonify({"errorcode": 400, "message": "id参数不能为空", "data": None}), 400
+        
+        try:
+            id = int(id.strip())
+        except ValueError:
+            return jsonify({"errorcode": 400, "message": "id参数必须是数字", "data": None}), 400
         
         try:
             # 调用IncomeService的delete_income方法
@@ -215,70 +238,45 @@ def setup_income_routes(app):
     
     @app.route("/api/income", methods=["GET"])
     @token_required
-    def get_all_incomes():
+    def get_income():
         """
-        获取所有收入记录接口
+        获取收入记录接口
         请求头：token, userid
+        请求参数：id(可选) - 提供id则获取单个记录，不提供则获取所有记录
         """
-        api_logger.info("获取所有收入记录路由被调用")
+        api_logger.info("获取收入记录路由被调用")
         
         # 从请求头中获取user_id
         user_id = int(request.headers.get('userid'))
         
+        # 从查询字符串中获取id参数
+        id = request.args.get("id", None)
+        
         # 记录获取收入请求
-        api_logger.info(f"收到获取所有收入请求 - user_id: {user_id}")
+        api_logger.info(f"收到获取收入请求 - user_id: {user_id}, id: {id}")
         
         try:
-            # 调用IncomeService的get_incomes_by_user_id方法
-            success, message, data = income_service.get_incomes_by_user_id(user_id)
+            if id:
+                # 获取单个收入记录
+                id = int(id.strip())
+                success, message, data = income_service.get_income_by_id(id, user_id)
+            else:
+                # 获取所有收入记录
+                success, message, data = income_service.get_incomes_by_user_id(user_id)
             
             if success:
-                api_logger.info(f"获取所有收入记录成功 - user_id: {user_id}")
+                api_logger.info(f"获取收入记录成功 - user_id: {user_id}, id: {id}")
                 return jsonify({"errorcode": 200, "message": message, "data": data}), 200
             else:
-                api_logger.warning(f"获取所有收入记录失败 - user_id: {user_id}, message: {message}")
+                api_logger.warning(f"获取收入记录失败 - user_id: {user_id}, id: {id}, message: {message}")
                 return jsonify({"errorcode": 400, "message": message, "data": None}), 400
         except ValueError as e:
             api_logger.error(f"参数类型错误: {e}")
             return jsonify({"errorcode": 400, "message": f"参数类型错误: {str(e)}", "data": None}), 400
         except Exception as e:
-            api_logger.error(f"获取所有收入记录过程中发生错误: {e}")
+            api_logger.error(f"获取收入记录过程中发生错误: {e}")
             import traceback
             traceback.print_exc()
-            return jsonify({"errorcode": 500, "message": f"获取所有收入记录失败: {str(e)}", "data": None}), 500
-    
-    @app.route("/api/income/<int:id>", methods=["GET"])
-    @token_required
-    def get_income_by_id(id):
-        """
-        获取单个收入记录接口
-        请求头：token, userid
-        """
-        api_logger.info(f"获取单个收入记录路由被调用 - id: {id}")
-        
-        # 从请求头中获取user_id
-        user_id = int(request.headers.get('userid'))
-        
-        # 记录获取收入请求
-        api_logger.info(f"收到获取单个收入请求 - user_id: {user_id}, id: {id}")
-        
-        try:
-            # 调用IncomeService的get_income_by_id方法
-            success, message, data = income_service.get_income_by_id(id, user_id)
-            
-            if success:
-                api_logger.info(f"获取单个收入记录成功 - user_id: {user_id}, id: {id}")
-                return jsonify({"errorcode": 200, "message": message, "data": data}), 200
-            else:
-                api_logger.warning(f"获取单个收入记录失败 - user_id: {user_id}, id: {id}, message: {message}")
-                return jsonify({"errorcode": 400, "message": message, "data": None}), 400
-        except ValueError as e:
-            api_logger.error(f"参数类型错误: {e}")
-            return jsonify({"errorcode": 400, "message": f"参数类型错误: {str(e)}", "data": None}), 400
-        except Exception as e:
-            api_logger.error(f"获取单个收入记录过程中发生错误: {e}")
-            import traceback
-            traceback.print_exc()
-            return jsonify({"errorcode": 500, "message": f"获取单个收入记录失败: {str(e)}", "data": None}), 500
+            return jsonify({"errorcode": 500, "message": f"获取收入记录失败: {str(e)}", "data": None}), 500
     
     api_logger.info("收入API路由配置完成")

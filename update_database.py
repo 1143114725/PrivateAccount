@@ -1,6 +1,14 @@
 import pymysql
 import configparser
 import os
+import sys
+
+# 添加项目根目录到Python路径
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from utils.LogUtils import LogUtils
+
+# 初始化日志
+logger = LogUtils.get_instance('DatabaseUpdate')
 
 # 读取配置文件
 config = configparser.ConfigParser()
@@ -23,7 +31,7 @@ try:
     conn = pymysql.connect(**db_config)
     cursor = conn.cursor()
     
-    print("成功连接到数据库")
+    logger.info("成功连接到数据库")
     
     # 执行SQL语句修改字段名
     sql = "ALTER TABLE expend CHANGE consumption_id expend_type_id BIGINT COMMENT '消费类型id';"
@@ -32,16 +40,16 @@ try:
     # 提交事务
     conn.commit()
     
-    print("数据库表结构修改成功：将expend表中的consumption_id字段改为expend_type_id")
+    logger.info("数据库表结构修改成功：将expend表中的consumption_id字段改为expend_type_id")
     
     # 关闭游标和连接
     cursor.close()
     conn.close()
     
-    print("数据库连接已关闭")
+    logger.info("数据库连接已关闭")
     
 except Exception as e:
-    print(f"修改数据库表结构时发生错误：{str(e)}")
+    logger.error(f"修改数据库表结构时发生错误：{str(e)}")
     if 'conn' in locals() and conn:
         conn.rollback()
         conn.close()

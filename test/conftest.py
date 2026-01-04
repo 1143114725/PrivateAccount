@@ -43,10 +43,12 @@ def mock_database():
     """
     # 同时patch多个可能的导入路径
     with (patch('db.Database.Database') as mock_db_class,
+          patch('dao.ExpendDAO.Database') as mock_expend_dao_db_class,
           patch('dao.ExpendTypeDAO.Database') as mock_expendtype_dao_db_class,
           patch('dao.IncomeDAO.Database') as mock_income_dao_db_class):
         mock_db = Mock()
         mock_db_class.return_value = mock_db
+        mock_expend_dao_db_class.return_value = mock_db
         mock_expendtype_dao_db_class.return_value = mock_db
         mock_income_dao_db_class.return_value = mock_db
         
@@ -67,8 +69,9 @@ def mock_database():
         # 配置游标方法模拟
         mock_cursor.lastrowid = 1
         mock_cursor.rowcount = 1
-        mock_cursor.fetchone.return_value = None
-        mock_cursor.fetchall.return_value = None
+        # 不设置默认的fetchone和fetchall返回值，让测试函数自己设置
+        # mock_cursor.fetchone.return_value = None
+        # mock_cursor.fetchall.return_value = None
         
         # 模拟类变量pool
         mock_pool = Mock()

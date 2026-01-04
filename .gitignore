@@ -40,4 +40,4 @@ config/*.ini
 *.temp
 
 # Test folders
-test/
+# test/

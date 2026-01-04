@@ -603,7 +603,7 @@ python app.py
 - `account_id` (必须): 账户ID
 - `expend_type_id` (必须): 支出类型ID
 - `remark` (可选): 支出备注
-- `expend_time` (可选): 支出时间（格式：YYYY-MM-DD HH:MM:SS）
+- `expend_time` (可选): 支出时间（格式：YYYY-MM-DD HH:MM:SS 或毫秒级时间戳）
 - `enable` (可选): 是否启用，默认为True
 
 **返回格式**:
@@ -626,18 +626,19 @@ python app.py
 
 #### 5.2 修改支出记录接口
 
-**URL**: `/api/expend/<int:id>`
+**URL**: `/api/expend`
 **方法**: `PUT`
 **请求头**:
 - `token`: 用户认证令牌
 - `userid`: 用户ID
 
 **参数**:
+- `id` (必须): 支出记录ID
 - `money` (可选): 支出金额
 - `account_id` (可选): 账户ID
 - `expend_type_id` (可选): 支出类型ID
 - `remark` (可选): 支出备注
-- `expend_time` (可选): 支出时间（格式：YYYY-MM-DD HH:MM:SS）
+- `expend_time` (可选): 支出时间（格式：YYYY-MM-DD HH:MM:SS 或毫秒级时间戳）
 - `enable` (可选): 是否启用
 
 **返回格式**:
@@ -660,11 +661,14 @@ python app.py
 
 #### 5.3 删除支出记录接口
 
-**URL**: `/api/expend/<int:id>`
+**URL**: `/api/expend`
 **方法**: `DELETE`
 **请求头**:
 - `token`: 用户认证令牌
 - `userid`: 用户ID
+
+**参数**:
+- `id` (必须): 支出记录ID
 
 **返回格式**:
 ```json
@@ -675,7 +679,7 @@ python app.py
 }
 ```
 
-#### 5.4 查询所有支出记录接口
+#### 5.4 查询支出记录接口
 
 **URL**: `/api/expend`
 **方法**: `GET`
@@ -683,7 +687,30 @@ python app.py
 - `token`: 用户认证令牌
 - `userid`: 用户ID
 
+**查询参数**:
+- `id` (可选): 支出记录ID，提供id则获取单个记录，不提供则获取所有记录
+
 **返回格式**:
+
+查询单个支出记录：
+```json
+{
+  "errorcode": 200,
+  "message": "查询支出记录成功",
+  "data": {
+    "id": 1,
+    "money": 50.50,
+    "remark": "午餐",
+    "expend_time": "2024-01-01 12:00:00",
+    "account_id": 1,
+    "expend_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+查询所有支出记录：
 ```json
 {
   "errorcode": 200,
@@ -713,32 +740,6 @@ python app.py
 }
 ```
 
-#### 5.5 查询单个支出记录接口
-
-**URL**: `/api/expend/<int:id>`
-**方法**: `GET`
-**请求头**:
-- `token`: 用户认证令牌
-- `userid`: 用户ID
-
-**返回格式**:
-```json
-{
-  "errorcode": 200,
-  "message": "查询支出记录成功",
-  "data": {
-    "id": 1,
-    "money": 50.50,
-    "remark": "午餐",
-    "expend_time": "2024-01-01 12:00:00",
-    "account_id": 1,
-    "expend_type_id": 1,
-    "create_time": "2024-01-01T00:00:00",
-    "enable": true
-  }
-}
-```
-
 ### 6. 收入记录管理模块
 
 #### 6.1 新增收入记录接口
@@ -754,7 +755,7 @@ python app.py
 - `account_id` (必须): 账户ID
 - `income_type_id` (必须): 收入类型ID
 - `remark` (可选): 收入备注
-- `income_time` (可选): 收入时间（格式：YYYY-MM-DD HH:MM:SS）
+- `income_time` (可选): 收入时间（格式：YYYY-MM-DD HH:MM:SS 或毫秒级时间戳）
 - `enable` (可选): 是否启用，默认为True
 
 **返回格式**:
@@ -777,18 +778,19 @@ python app.py
 
 #### 6.2 修改收入记录接口
 
-**URL**: `/api/income/<int:id>`
+**URL**: `/api/income`
 **方法**: `PUT`
 **请求头**:
 - `token`: 用户认证令牌
 - `userid`: 用户ID
 
 **参数**:
+- `id` (必须): 收入记录ID
 - `money` (可选): 收入金额
 - `account_id` (可选): 账户ID
 - `income_type_id` (可选): 收入类型ID
 - `remark` (可选): 收入备注
-- `income_time` (可选): 收入时间（格式：YYYY-MM-DD HH:MM:SS）
+- `income_time` (可选): 收入时间（格式：YYYY-MM-DD HH:MM:SS 或毫秒级时间戳）
 - `enable` (可选): 是否启用
 
 **返回格式**:
@@ -811,11 +813,14 @@ python app.py
 
 #### 6.3 删除收入记录接口
 
-**URL**: `/api/income/<int:id>`
+**URL**: `/api/income`
 **方法**: `DELETE`
 **请求头**:
 - `token`: 用户认证令牌
 - `userid`: 用户ID
+
+**参数**:
+- `id` (必须): 收入记录ID
 
 **返回格式**:
 ```json
@@ -826,7 +831,7 @@ python app.py
 }
 ```
 
-#### 6.4 查询所有收入记录接口
+#### 6.4 查询收入记录接口
 
 **URL**: `/api/income`
 **方法**: `GET`
@@ -834,7 +839,30 @@ python app.py
 - `token`: 用户认证令牌
 - `userid`: 用户ID
 
+**查询参数**:
+- `id` (可选): 收入记录ID，提供id则获取单个记录，不提供则获取所有记录
+
 **返回格式**:
+
+查询单个收入记录：
+```json
+{
+  "errorcode": 200,
+  "message": "查询收入记录成功",
+  "data": {
+    "id": 1,
+    "money": 5000.00,
+    "remark": "工资收入",
+    "income_time": "2024-01-01 09:00:00",
+    "account_id": 1,
+    "income_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+查询所有收入记录：
 ```json
 {
   "errorcode": 200,
@@ -861,32 +889,6 @@ python app.py
       "enable": true
     }
   ]
-}
-```
-
-#### 6.5 查询单个收入记录接口
-
-**URL**: `/api/income/<int:id>`
-**方法**: `GET`
-**请求头**:
-- `token`: 用户认证令牌
-- `userid`: 用户ID
-
-**返回格式**:
-```json
-{
-  "errorcode": 200,
-  "message": "查询收入记录成功",
-  "data": {
-    "id": 1,
-    "money": 5000.00,
-    "remark": "工资收入",
-    "income_time": "2024-01-01 09:00:00",
-    "account_id": 1,
-    "income_type_id": 1,
-    "create_time": "2024-01-01T00:00:00",
-    "enable": true
-  }
 }
 ```
 
@@ -948,6 +950,31 @@ python -m pytest test/dao/
 ## 安全考虑
 
 - 密码使用MD5加密存储
+
+## 更新日志
+
+### 最近更新
+
+1. **日志系统优化**
+   - 将所有模块中的print语句替换为统一的LogUtils日志记录
+   - 确保在日志器初始化失败时仍能提供基本的错误记录功能
+
+2. **Token验证功能重构**
+   - 将token验证功能从各个API模块中提取到独立的AuthUtils工具模块
+   - 使用统一的@token_required装饰器实现认证
+
+3. **API接口优化**
+   - 确保所有expend和income接口的ID参数通过请求参数传递，不在URL路径中包含参数
+
+4. **测试框架完善**
+   - 实现服务层的依赖注入，提高测试可维护性
+   - 修复测试用例中的mock路径问题
+   - 确保所有测试文件集中存放在test文件夹中
+
+5. **代码质量提升**
+   - 遵循PEP 8编码规范
+   - 减少代码重复，提高模块独立性
+   - 增强错误处理和日志记录
 - 登录接口使用POST方法，避免敏感信息暴露在URL中
 - 使用JWT Token进行身份认证
 - 实现了Token过期机制

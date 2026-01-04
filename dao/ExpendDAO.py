@@ -32,6 +32,7 @@ class ExpendDAO:
         Returns:
             bool: 如果创建成功返回True，否则返回False
             int: 如果创建成功返回支出记录ID，否则返回0
+            str: 如果创建失败返回具体的错误信息，否则返回空字符串
         """
         ExpendDAO.logger.info(f"创建新支出记录: {money} (账户ID: {account_id}, 用户ID: {user_id})")
         try:
@@ -45,39 +46,54 @@ class ExpendDAO:
                     self.db.cur.execute(select_account_query, (account_id, user_id))
                     account = self.db.cur.fetchone()
                     if not account:
-                        ExpendDAO.logger.error(f"创建支出记录失败: 账户不存在或不属于当前用户")
+                        error_msg = "账户不存在或不属于当前用户"
+                        ExpendDAO.logger.error(f"创建支出记录失败: {error_msg}")
                         self.db.rollback()
-                        return False, 0
+                        return False, 0, error_msg
                     
                     current_balance = account[2]  # 账户余额在索引2的位置
-                    if current_balance < money:
-                        ExpendDAO.logger.error(f"创建支出记录失败: 账户余额不足")
+                    money_decimal = decimal.Decimal(str(money))
+                    if current_balance < money_decimal:
+                        error_msg = "账户余额不足"
+                        ExpendDAO.logger.error(f"创建支出记录失败: {error_msg}")
                         self.db.rollback()
-                        return False, 0
+                        return False, 0, error_msg
                     
-                    # 2. 插入支出记录
+                    # 3. 检查支出类型是否存在
+                    select_expend_type_query = "SELECT * FROM expend_type WHERE id = %s"
+                    self.db.cur.execute(select_expend_type_query, (expend_type_id,))
+                    expend_type = self.db.cur.fetchone()
+                    if not expend_type:
+                        error_msg = "支出类型不存在"
+                        ExpendDAO.logger.error(f"创建支出记录失败: {error_msg}")
+                        self.db.rollback()
+                        return False, 0, error_msg
+                    
+                    # 4. 插入支出记录
                     insert_query = "INSERT INTO expend (money, account_id, user_id, remark, expend_time, enable, expend_type_id) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     self.db.cur.execute(insert_query, (money, account_id, user_id, remark, expend_time, enable, expend_type_id))
                     expend_id = self.db.cur.lastrowid
                     
                     # 3. 更新账户余额
-                    new_balance = current_balance - decimal.Decimal(str(money))
+                    new_balance = current_balance - money_decimal
                     update_balance_query = "UPDATE account SET balance = %s WHERE id = %s"
                     self.db.cur.execute(update_balance_query, (new_balance, account_id))
                     
                     # 提交事务
                     self.db.commit()
                     ExpendDAO.logger.info(f"支出记录创建成功，ID: {expend_id}")
-                    return True, expend_id
+                    return True, expend_id, None
                 except Exception as e:
-                    ExpendDAO.logger.error(f"创建支出记录时事务处理失败: {e}")
+                    error_msg = f"事务处理失败: {str(e)}"
+                    ExpendDAO.logger.error(f"创建支出记录时{error_msg}")
                     self.db.rollback()
-                    return False, 0
+                    return False, 0, error_msg
         except Exception as e:
+            error_msg = f"数据库操作失败: {str(e)}"
             ExpendDAO.logger.error(f"创建支出记录时发生错误: {e}")
             if self.db.cur:
                 self.db.rollback()
-            return False, 0
+            return False, 0, error_msg
         finally:
             self.db.disconnect()
     
@@ -97,22 +113,20 @@ class ExpendDAO:
             
         Returns:
             bool: 如果修改成功返回True，否则返回False
+            str: 如果修改失败返回具体的错误信息，否则返回空字符串
         """
         ExpendDAO.logger.info(f"修改支出记录信息: ID={expend_id}, 用户ID={user_id}")
         try:
             if self.db.connect():
                 # 获取原支出记录信息
                 select_query = "SELECT * FROM expend WHERE id = %s AND user_id = %s"
-                if not self.db.execute(select_query, (expend_id, user_id)):
-                    self.db.rollback()
-                    ExpendDAO.logger.error(f"修改支出记录失败: 无法查询支出记录")
-                    return False
-                
+                self.db.cur.execute(select_query, (expend_id, user_id))
                 original_expend = self.db.cur.fetchone()
                 if not original_expend:
                     self.db.rollback()
-                    ExpendDAO.logger.error(f"修改支出记录失败: 支出记录不存在或不属于当前用户")
-                    return False
+                    error_msg = "支出记录不存在或不属于当前用户"
+                    ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
+                    return False, error_msg
                 
                 # 开始事务
                 self.db.cur.execute("START TRANSACTION")
@@ -156,8 +170,9 @@ class ExpendDAO:
                     
                     if not update_fields:
                         self.db.rollback()
-                        ExpendDAO.logger.warning("未提供任何更新字段")
-                        return False
+                        error_msg = "未提供任何更新字段"
+                        ExpendDAO.logger.warning(error_msg)
+                        return False, error_msg
                     
                     # 更新支出记录
                     update_query = f"UPDATE expend SET {', '.join(update_fields)} WHERE id = %s AND user_id = %s"
@@ -167,8 +182,9 @@ class ExpendDAO:
                     # 检查是否有行被修改
                     if self.db.cur.rowcount == 0:
                         self.db.rollback()
-                        ExpendDAO.logger.error(f"修改支出记录失败: 支出记录不存在或不属于当前用户")
-                        return False
+                        error_msg = "支出记录不存在或不属于当前用户"
+                        ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
+                        return False, error_msg
                     
                     # 更新账户余额
                     if original_account_id != new_account_id:
@@ -179,8 +195,9 @@ class ExpendDAO:
                         original_account = self.db.cur.fetchone()
                         if not original_account:
                             self.db.rollback()
-                            ExpendDAO.logger.error(f"修改支出记录失败: 原账户不存在")
-                            return False
+                            error_msg = "原账户不存在"
+                            ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
+                            return False, error_msg
                         
                         new_original_balance = original_account[2] + decimal.Decimal(str(original_money))
                         update_original_balance_query = "UPDATE account SET balance = %s WHERE id = %s"
@@ -192,14 +209,16 @@ class ExpendDAO:
                         new_account = self.db.cur.fetchone()
                         if not new_account:
                             self.db.rollback()
-                            ExpendDAO.logger.error(f"修改支出记录失败: 新账户不存在或不属于当前用户")
-                            return False
+                            error_msg = "新账户不存在或不属于当前用户"
+                            ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
+                            return False, error_msg
                         
                         current_new_balance = new_account[2]
                         if current_new_balance < new_money:
                             self.db.rollback()
-                            ExpendDAO.logger.error(f"修改支出记录失败: 新账户余额不足")
-                            return False
+                            error_msg = "新账户余额不足"
+                            ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
+                            return False, error_msg
                         
                         # 3. 扣除新账户余额
                         new_new_balance = current_new_balance - decimal.Decimal(str(new_money))
@@ -212,8 +231,9 @@ class ExpendDAO:
                         account = self.db.cur.fetchone()
                         if not account:
                             self.db.rollback()
-                            ExpendDAO.logger.error(f"修改支出记录失败: 账户不存在")
-                            return False
+                            error_msg = "账户不存在或不属于当前用户"
+                            ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
+                            return False, error_msg
                         
                         # 计算新余额
                         current_balance = account[2]
@@ -222,8 +242,9 @@ class ExpendDAO:
                         
                         if new_balance < 0:
                             self.db.rollback()
-                            ExpendDAO.logger.error(f"修改支出记录失败: 账户余额不足")
-                            return False
+                            error_msg = "账户余额不足"
+                            ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
+                            return False, error_msg
                         
                         update_balance_query = "UPDATE account SET balance = %s WHERE id = %s"
                         self.db.cur.execute(update_balance_query, (new_balance, original_account_id))
@@ -231,16 +252,18 @@ class ExpendDAO:
                     # 提交事务
                     self.db.commit()
                     ExpendDAO.logger.info(f"支出记录ID={expend_id}的信息修改成功")
-                    return True
+                    return True, None
                 except Exception as e:
-                    ExpendDAO.logger.error(f"修改支出记录时事务处理失败: {e}")
+                    error_msg = f"事务处理失败: {str(e)}"
+                    ExpendDAO.logger.error(f"修改支出记录时{error_msg}")
                     self.db.rollback()
-                    return False
+                    return False, error_msg
         except Exception as e:
+            error_msg = f"数据库操作失败: {str(e)}"
             ExpendDAO.logger.error(f"修改支出记录时发生错误: {e}")
             if self.db.cur:
                 self.db.rollback()
-            return False
+            return False, error_msg
         finally:
             self.db.disconnect()
     
@@ -254,6 +277,7 @@ class ExpendDAO:
             
         Returns:
             bool: 如果删除成功返回True，否则返回False
+            str: 如果删除失败返回具体的错误信息，否则返回空字符串
         """
         ExpendDAO.logger.info(f"删除支出记录: ID={expend_id}, 用户ID={user_id}")
         try:
@@ -268,8 +292,9 @@ class ExpendDAO:
                     expend = self.db.cur.fetchone()
                     if not expend:
                         self.db.rollback()
-                        ExpendDAO.logger.error(f"删除支出记录失败: 支出记录不存在或不属于当前用户")
-                        return False
+                        error_msg = "支出记录不存在或不属于当前用户"
+                        ExpendDAO.logger.error(f"删除支出记录失败: {error_msg}")
+                        return False, error_msg
                     
                     # 2. 删除支出记录
                     delete_query = "DELETE FROM expend WHERE id = %s AND user_id = %s"
@@ -284,8 +309,9 @@ class ExpendDAO:
                     account = self.db.cur.fetchone()
                     if not account:
                         self.db.rollback()
-                        ExpendDAO.logger.error(f"删除支出记录失败: 账户不存在")
-                        return False
+                        error_msg = "账户不存在或不属于当前用户"
+                        ExpendDAO.logger.error(f"删除支出记录失败: {error_msg}")
+                        return False, error_msg
                     
                     new_balance = account[2] + decimal.Decimal(str(money))  # 账户余额在索引2的位置
                     update_balance_query = "UPDATE account SET balance = %s WHERE id = %s"
@@ -294,16 +320,18 @@ class ExpendDAO:
                     # 提交事务
                     self.db.commit()
                     ExpendDAO.logger.info(f"支出记录ID={expend_id}删除成功")
-                    return True
+                    return True, None
                 except Exception as e:
-                    ExpendDAO.logger.error(f"删除支出记录时事务处理失败: {e}")
+                    error_msg = f"事务处理失败: {str(e)}"
+                    ExpendDAO.logger.error(f"删除支出记录时{error_msg}")
                     self.db.rollback()
-                    return False
+                    return False, error_msg
         except Exception as e:
+            error_msg = f"数据库操作失败: {str(e)}"
             ExpendDAO.logger.error(f"删除支出记录时发生错误: {e}")
             if self.db.cur:
                 self.db.rollback()
-            return False
+            return False, error_msg
         finally:
             self.db.disconnect()
     

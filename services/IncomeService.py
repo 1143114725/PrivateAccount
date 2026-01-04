@@ -2,8 +2,8 @@ from models.Income import IncomeInfoModel
 from dao.IncomeDAO import IncomeDAO
 
 class IncomeService:
-    def __init__(self):
-        self.income_dao = IncomeDAO()
+    def __init__(self, income_dao=None):
+        self.income_dao = income_dao or IncomeDAO()
 
     def create_income(self, money, account_id, user_id, remark, income_time, income_type_id, enable=True):
         if not all([money, account_id, user_id, income_time, income_type_id]):

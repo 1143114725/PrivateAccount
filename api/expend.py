@@ -101,20 +101,19 @@ def setup_expend_routes(app):
             traceback.print_exc()
             return jsonify({"errorcode": 500, "message": f"新增支出记录失败: {str(e)}", "data": None}), 500
     
-    @app.route("/api/expend/<int:id>", methods=["PUT"])
+    @app.route("/api/expend", methods=["PUT"])
     @token_required
-    def update_expend(id):
+    def update_expend():
         """
         更新支出记录接口
         请求头：token, userid
-        请求体：money(可选), account_id(可选), remark(可选), expend_time(可选), expend_type_id(可选), enable(可选)
+        请求体：id, money(可选), account_id(可选), remark(可选), expend_time(可选), expend_type_id(可选), enable(可选)
         """
-        api_logger.info(f"更新支出记录路由被调用 - id: {id}")
-        
         # 从请求头中获取user_id
         user_id = int(request.headers.get('userid'))
         
         # 从请求体中获取参数
+        id = request.form.get("id", None)
         money = request.form.get("money", None)
         account_id = request.form.get("account_id", None)
         remark = request.form.get("remark", None)
@@ -122,10 +121,19 @@ def setup_expend_routes(app):
         expend_type_id = request.form.get("expend_type_id", None)
         enable = request.form.get("enable", None)
         
+        api_logger.info(f"更新支出记录路由被调用 - id: {id}")
+        
         # 记录更新支出请求
         api_logger.info(f"收到更新支出请求 - user_id: {user_id}, id: {id}, money: {money}, account_id: {account_id}, remark: {remark}, expend_time: {expend_time}, expend_type_id: {expend_type_id}, enable: {enable}")
         
         try:
+            # 验证id参数
+            if not id:
+                return jsonify({"errorcode": 400, "message": "参数id不能为空", "data": None}), 400
+            
+            # 转换id类型
+            id = int(id.strip()) if id.strip() else None
+            
             # 转换可选参数类型
             if money is not None:
                 money = float(money.strip()) if money.strip() else None
@@ -182,22 +190,32 @@ def setup_expend_routes(app):
             traceback.print_exc()
             return jsonify({"errorcode": 500, "message": f"更新支出记录失败: {str(e)}", "data": None}), 500
     
-    @app.route("/api/expend/<int:id>", methods=["DELETE"])
+    @app.route("/api/expend", methods=["DELETE"])
     @token_required
-    def delete_expend(id):
+    def delete_expend():
         """
         删除支出记录接口
         请求头：token, userid
+        请求体：id
         """
-        api_logger.info(f"删除支出记录路由被调用 - id: {id}")
-        
         # 从请求头中获取user_id
         user_id = int(request.headers.get('userid'))
         
+        # 从请求体中获取id参数
+        id = request.form.get("id", None)
+        
         # 记录删除支出请求
         api_logger.info(f"收到删除支出请求 - user_id: {user_id}, id: {id}")
+        api_logger.info(f"删除支出记录路由被调用 - id: {id}")
         
         try:
+            # 验证id参数
+            if not id:
+                return jsonify({"errorcode": 400, "message": "参数id不能为空", "data": None}), 400
+            
+            # 转换id类型
+            id = int(id.strip()) if id.strip() else None
+            
             # 调用ExpendService的delete_expend方法
             success, message, data = expend_service.delete_expend(id, user_id)
             
@@ -215,63 +233,48 @@ def setup_expend_routes(app):
     
     @app.route("/api/expend", methods=["GET"])
     @token_required
-    def get_all_expends():
+    def get_expend_by_id():
         """
-        获取所有支出记录接口
+        获取支出记录接口
         请求头：token, userid
+        请求参数：id(可选) - 提供id则获取单个记录，不提供则获取所有记录
         """
-        api_logger.info("获取所有支出记录路由被调用")
-        
         # 从请求头中获取user_id
         user_id = int(request.headers.get('userid'))
         
-        # 记录获取支出请求
-        api_logger.info(f"收到获取所有支出请求 - user_id: {user_id}")
+        # 从查询字符串中获取id参数
+        id = request.args.get("id", None)
         
-        try:
-            # 调用ExpendService的get_expends_by_user_id方法
-            success, message, data = expend_service.get_expends_by_user_id(user_id)
-            
-            if success:
-                api_logger.info(f"获取所有支出记录成功 - user_id: {user_id}")
-                return jsonify({"errorcode": 200, "message": message, "data": data}), 200
-            else:
-                api_logger.warning(f"获取所有支出记录失败 - user_id: {user_id}, message: {message}")
-                return jsonify({"errorcode": 400, "message": message, "data": None}), 400
-        except ValueError as e:
-            api_logger.error(f"参数类型错误: {e}")
-            return jsonify({"errorcode": 400, "message": f"参数类型错误: {str(e)}", "data": None}), 400
-        except Exception as e:
-            api_logger.error(f"获取所有支出记录过程中发生错误: {e}")
-            import traceback
-            traceback.print_exc()
-            return jsonify({"errorcode": 500, "message": f"获取所有支出记录失败: {str(e)}", "data": None}), 500
-    
-    @app.route("/api/expend/<int:id>", methods=["GET"])
-    @token_required
-    def get_expend_by_id(id):
-        """
-        获取单个支出记录接口
-        请求头：token, userid
-        """
-        api_logger.info(f"获取单个支出记录路由被调用 - id: {id}")
-        
-        # 从请求头中获取user_id
-        user_id = int(request.headers.get('userid'))
+        api_logger.info(f"获取支出记录路由被调用 - id: {id}")
         
         # 记录获取支出请求
-        api_logger.info(f"收到获取单个支出请求 - user_id: {user_id}, id: {id}")
+        api_logger.info(f"收到获取支出请求 - user_id: {user_id}, id: {id}")
         
         try:
-            # 调用ExpendService的get_expend_by_id方法
-            success, message, data = expend_service.get_expend_by_id(id, user_id)
-            
-            if success:
-                api_logger.info(f"获取单个支出记录成功 - user_id: {user_id}, id: {id}")
-                return jsonify({"errorcode": 200, "message": message, "data": data}), 200
+            # 检查是否提供了id参数，如果提供则获取单个记录，否则获取所有记录
+            if id:
+                # 转换id类型
+                id = int(id.strip()) if id.strip() else None
+                
+                # 调用ExpendService的get_expend_by_id方法
+                success, message, data = expend_service.get_expend_by_id(id, user_id)
+                
+                if success:
+                    api_logger.info(f"获取单个支出记录成功 - user_id: {user_id}, id: {id}")
+                    return jsonify({"errorcode": 200, "message": message, "data": data}), 200
+                else:
+                    api_logger.warning(f"获取单个支出记录失败 - user_id: {user_id}, id: {id}, message: {message}")
+                    return jsonify({"errorcode": 400, "message": message, "data": None}), 400
             else:
-                api_logger.warning(f"获取单个支出记录失败 - user_id: {user_id}, id: {id}, message: {message}")
-                return jsonify({"errorcode": 400, "message": message, "data": None}), 400
+                # 调用ExpendService的get_expends_by_user_id方法获取所有记录
+                success, message, data = expend_service.get_expends_by_user_id(user_id)
+                
+                if success:
+                    api_logger.info(f"获取所有支出记录成功 - user_id: {user_id}")
+                    return jsonify({"errorcode": 200, "message": message, "data": data}), 200
+                else:
+                    api_logger.warning(f"获取所有支出记录失败 - user_id: {user_id}, message: {message}")
+                    return jsonify({"errorcode": 400, "message": message, "data": None}), 400
         except ValueError as e:
             api_logger.error(f"参数类型错误: {e}")
             return jsonify({"errorcode": 400, "message": f"参数类型错误: {str(e)}", "data": None}), 400

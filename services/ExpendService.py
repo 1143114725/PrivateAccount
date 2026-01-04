@@ -2,8 +2,8 @@ from models.Expend import ExpendInfoModel
 from dao.ExpendDAO import ExpendDAO
 
 class ExpendService:
-    def __init__(self):
-        self.expend_dao = ExpendDAO()
+    def __init__(self, expend_dao=None):
+        self.expend_dao = expend_dao or ExpendDAO()
 
     def create_expend(self, money, account_id, user_id, remark, expend_time, expend_type_id, enable=True):
         if not all([money, account_id, user_id, expend_time, expend_type_id]):
@@ -13,11 +13,11 @@ class ExpendService:
             return False, "金额必须大于0", None
         
         try:
-            success, expend_id = self.expend_dao.create_expend(money, account_id, user_id, remark, expend_time, expend_type_id, enable)
+            success, expend_id, error_msg = self.expend_dao.create_expend(money, account_id, user_id, remark, expend_time, expend_type_id, enable)
             if success:
                 return True, "创建支出记录成功", {"id": expend_id}
             else:
-                return False, "创建支出记录失败", None
+                return False, f"创建支出记录失败: {error_msg}", None
         except Exception as e:
             return False, f"创建支出记录时发生错误: {str(e)}", None
 
@@ -29,11 +29,11 @@ class ExpendService:
             return False, "金额必须大于0", None
         
         try:
-            success = self.expend_dao.update_expend(id, user_id, money, account_id, remark, expend_time, enable, expend_type_id)
+            success, error_msg = self.expend_dao.update_expend(id, user_id, money, account_id, remark, expend_time, enable, expend_type_id)
             if success:
                 return True, "更新支出记录成功", {"id": id}
             else:
-                return False, "更新支出记录失败或记录不存在", None
+                return False, f"更新支出记录失败: {error_msg}", None
         except Exception as e:
             return False, f"更新支出记录时发生错误: {str(e)}", None
 
@@ -42,11 +42,11 @@ class ExpendService:
             return False, "参数不能为空", None
         
         try:
-            success = self.expend_dao.delete_expend(id, user_id)
+            success, error_msg = self.expend_dao.delete_expend(id, user_id)
             if success:
                 return True, "删除支出记录成功", {"id": id}
             else:
-                return False, "删除支出记录失败或记录不存在", None
+                return False, f"删除支出记录失败: {error_msg}", None
         except Exception as e:
             return False, f"删除支出记录时发生错误: {str(e)}", None
 

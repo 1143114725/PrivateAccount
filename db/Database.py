@@ -20,7 +20,10 @@ class Database:
             try:
                 Database.logger = LogUtils.get_instance('Database')
             except Exception as e:
-                print(f"初始化日志器失败: {e}")
+                # 如果日志器初始化失败，使用基本的logging配置作为后备
+                import logging
+                logging.basicConfig(level=logging.ERROR)
+                logging.error(f"初始化日志器失败: {e}")
                 import traceback
                 traceback.print_exc()
         
@@ -41,7 +44,13 @@ class Database:
                 self._load_config()
                 self._create_pool()
             except Exception as e:
-                print(f"初始化数据库连接池失败: {e}")
+                if Database.logger is not None:
+                    Database.logger.error(f"初始化数据库连接池失败: {e}")
+                else:
+                    # 如果日志器不可用，使用基本的logging配置作为后备
+                    import logging
+                    logging.basicConfig(level=logging.ERROR)
+                    logging.error(f"初始化数据库连接池失败: {e}")
                 import traceback
                 traceback.print_exc()
     

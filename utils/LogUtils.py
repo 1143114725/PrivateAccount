@@ -129,7 +129,10 @@ class LogUtils:
             self.config = ConfigManager(self.config_file)
         except Exception as e:
             # 如果加载配置文件失败，使用默认配置
-            print(f"加载配置文件失败: {e}")
+            # 使用basicConfig临时配置日志，因为self.logger可能还未初始化
+            import logging
+            logging.basicConfig(level=logging.ERROR)
+            logging.error(f"加载配置文件失败: {e}")
             self.config = None
     
     def _init_logger(self):
@@ -233,7 +236,7 @@ class LogUtils:
             mail_subject = self._get_config_value('logging', 'email_subject', '应用程序错误日志')
             
             if not all([mail_host, mail_username, mail_password, mail_from, mail_to]):
-                print("邮件配置不完整，跳过邮件处理器配置")
+                self.logger.warning("邮件配置不完整，跳过邮件处理器配置")
                 return
             
             # 创建邮件处理器
@@ -261,7 +264,7 @@ class LogUtils:
             
             self.logger.addHandler(handler)
         except Exception as e:
-            print(f"配置邮件处理器失败: {e}")
+            self.logger.error(f"配置邮件处理器失败: {e}")
     
     def _add_network_handler(self):
         """添加网络处理器"""
@@ -292,7 +295,7 @@ class LogUtils:
             
             self.logger.addHandler(handler)
         except Exception as e:
-            print(f"配置网络处理器失败: {e}")
+            self.logger.error(f"配置网络处理器失败: {e}")
     
     def _add_filters(self, handler):
         """为处理器添加过滤器"""

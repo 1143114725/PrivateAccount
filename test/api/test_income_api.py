@@ -56,9 +56,10 @@ def test_update_income(mock_update_income, mock_validate_token, mock_get_user, c
     mock_update_income.return_value = (True, "更新收入记录成功", {"id": 1})
     
     # 发送更新收入请求
-    response = client.put('/api/income/1', 
+    response = client.put('/api/income', 
                          headers=mock_token_header,
                          data={
+                             'id': '1',
                              'money': '200',
                              'remark': '更新后的测试收入'
                          })
@@ -81,7 +82,7 @@ def test_delete_income(mock_delete_income, mock_validate_token, mock_get_user, c
     mock_delete_income.return_value = (True, "删除收入记录成功", {"id": 1})
     
     # 发送删除收入请求
-    response = client.delete('/api/income/1', headers=mock_token_header)
+    response = client.delete('/api/income', headers=mock_token_header, data={'id': '1'})
     
     # 验证响应
     assert response.status_code == 200
@@ -110,8 +111,8 @@ def test_get_income_by_id(mock_get_income, mock_validate_token, mock_get_user, c
         "income_type_id": 1
     })
     
-    # 发送获取收入请求
-    response = client.get('/api/income/1', headers=mock_token_header)
+    # 发送获取收入请求 - 使用查询参数id
+    response = client.get('/api/income?id=1', headers=mock_token_header)
     
     # 验证响应
     assert response.status_code == 200
