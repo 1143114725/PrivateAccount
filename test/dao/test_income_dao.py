@@ -53,10 +53,11 @@ def test_create_income_success(mock_database, test_income_data, mock_account_dat
     mock_cursor.rowcount = 1
     
     # 模拟查询账户成功
-    mock_database.execute.side_effect = [
-        True,  # 第一次execute是查询账户
-        True,  # 第二次execute是插入收入记录
-        True   # 第三次execute是更新账户余额
+    mock_cursor.execute.side_effect = [
+        True,  # 第一次execute是START TRANSACTION
+        True,  # 第二次execute是查询账户
+        True,  # 第三次execute是插入收入记录
+        True   # 第四次execute是更新账户余额
     ]
     mock_database.cur.fetchone.side_effect = [
         (mock_account_data['id'], mock_account_data['account_name'], mock_account_data['balance'], 
@@ -75,7 +76,8 @@ def test_create_income_success(mock_database, test_income_data, mock_account_dat
         test_income_data['user_id'],
         test_income_data['remark'],
         test_income_data['income_time'],
-        test_income_data['income_type_id']
+        test_income_data['income_type_id'],
+        True
     )
     
     # 验证结果
@@ -84,7 +86,7 @@ def test_create_income_success(mock_database, test_income_data, mock_account_dat
     
     # 验证调用
     assert mock_database.connect.call_count == 1
-    assert mock_database.execute.call_count == 3
+    assert mock_database.cur.execute.call_count == 4  # START TRANSACTION, 查询账户, 插入收入记录, 更新账户余额
     assert mock_database.commit.call_count == 1
     assert mock_database.disconnect.call_count == 1
 
@@ -94,7 +96,8 @@ def test_create_income_account_not_found(mock_database, test_income_data):
     测试创建收入记录失败 - 账户不存在
     """
     # 配置模拟 - 账户不存在
-    mock_database.execute.side_effect = [
+    mock_database.cur.execute.side_effect = [
+        True,  # START TRANSACTION
         True,  # 查询账户
     ]
     mock_database.cur.fetchone.return_value = None  # 查询账户返回None
@@ -109,7 +112,8 @@ def test_create_income_account_not_found(mock_database, test_income_data):
         test_income_data['user_id'],
         test_income_data['remark'],
         test_income_data['income_time'],
-        test_income_data['income_type_id']
+        test_income_data['income_type_id'],
+        True
     )
     
     # 验证结果
@@ -118,7 +122,7 @@ def test_create_income_account_not_found(mock_database, test_income_data):
     
     # 验证调用
     assert mock_database.connect.call_count == 1
-    assert mock_database.execute.call_count == 1
+    assert mock_database.cur.execute.call_count == 2  # START TRANSACTION, 查询账户
     assert mock_database.rollback.call_count == 1
     assert mock_database.disconnect.call_count == 1
 
@@ -132,11 +136,13 @@ def test_update_income_success(mock_database, test_income_data, mock_account_dat
     mock_cursor.rowcount = 1
     
     # 模拟查询原收入记录和账户
-    mock_database.execute.side_effect = [
+    mock_database.cur.execute.side_effect = [
         True,  # 查询原收入记录
+        True,  # 开始事务
         True,  # 更新收入记录
         True   # 更新账户余额
     ]
+    mock_database.execute.return_value = True  # 初始查询原收入记录
     mock_database.cur.fetchone.side_effect = [
         (test_income_data['id'], 50, test_income_data['account_id'], test_income_data['user_id'], 
          test_income_data['remark'], test_income_data['income_time'], test_income_data['create_time'], 
@@ -162,7 +168,8 @@ def test_update_income_success(mock_database, test_income_data, mock_account_dat
     
     # 验证调用
     assert mock_database.connect.call_count == 1
-    assert mock_database.execute.call_count == 3
+    assert mock_database.execute.call_count == 1  # 初始查询原收入记录
+    assert mock_database.cur.execute.call_count == 4  # 查询原收入记录, 开始事务, 更新收入记录, 更新账户余额
     assert mock_database.commit.call_count == 1
     assert mock_database.disconnect.call_count == 1
 
@@ -176,9 +183,11 @@ def test_delete_income_success(mock_database, test_income_data, mock_account_dat
     mock_cursor.rowcount = 1
     
     # 模拟查询收入记录和账户
-    mock_database.execute.side_effect = [
+    mock_database.cur.execute.side_effect = [
+        True,  # 开始事务
         True,  # 查询收入记录
         True,  # 删除收入记录
+        True,  # 查询账户
         True   # 更新账户余额
     ]
     mock_database.cur.fetchone.side_effect = [
@@ -205,7 +214,7 @@ def test_delete_income_success(mock_database, test_income_data, mock_account_dat
     
     # 验证调用
     assert mock_database.connect.call_count == 1
-    assert mock_database.execute.call_count == 3
+    assert mock_database.cur.execute.call_count == 5  # 开始事务, 查询收入记录, 删除收入记录, 查询账户, 更新账户余额
     assert mock_database.commit.call_count == 1
     assert mock_database.disconnect.call_count == 1
 

@@ -70,7 +70,8 @@ def test_create_income_success(mock_income_dao, test_income_data):
         test_income_data['user_id'],
         test_income_data['remark'],
         test_income_data['income_time'],
-        test_income_data['income_type_id']
+        test_income_data['income_type_id'],
+        True
     )
 
 
@@ -153,12 +154,12 @@ def test_update_income_success(mock_income_dao, test_income_data):
     mock_income_dao.update_income.assert_called_once_with(
         test_income_data['id'],
         test_income_data['user_id'],
-        money=200,
-        account_id=None,
-        remark=None,
-        income_time=None,
-        enable=None,
-        income_type_id=None
+        200,  # money
+        None,  # account_id
+        None,  # remark
+        None,  # income_time
+        None,  # enable
+        None   # income_type_id
     )
 
 

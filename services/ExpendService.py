@@ -5,7 +5,7 @@ class ExpendService:
     def __init__(self):
         self.expend_dao = ExpendDAO()
 
-    def create_expend(self, money, account_id, user_id, remark, expend_time, expend_type_id):
+    def create_expend(self, money, account_id, user_id, remark, expend_time, expend_type_id, enable=True):
         if not all([money, account_id, user_id, expend_time, expend_type_id]):
             return False, "参数不能为空", None
         
@@ -13,7 +13,7 @@ class ExpendService:
             return False, "金额必须大于0", None
         
         try:
-            success, expend_id = self.expend_dao.create_expend(money, account_id, user_id, remark, expend_time, expend_type_id)
+            success, expend_id = self.expend_dao.create_expend(money, account_id, user_id, remark, expend_time, expend_type_id, enable)
             if success:
                 return True, "创建支出记录成功", {"id": expend_id}
             else:

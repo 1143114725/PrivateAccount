@@ -3,6 +3,8 @@ from functools import wraps
 from services.IncomeService import IncomeService
 from utils.LogUtils import LogUtils
 from utils.AuthUtils import token_required
+from utils.TimeUtils import TimeUtils
+from datetime import datetime
 
 # 初始化API日志记录器
 api_logger = LogUtils.get_instance('API')
@@ -53,11 +55,36 @@ def setup_income_routes(app):
                 enable = enable.strip().lower() in ['true', '1', 'yes']
             if remark is not None:
                 remark = remark.strip()
-            if income_time is not None:
-                income_time = income_time.strip()
+            
+            # 处理时间参数 - 支持毫秒级时间戳或时间字符串
+            if income_time is not None and income_time.strip():
+                income_time_str = income_time.strip()
+                # 尝试解析为毫秒级时间戳
+                try:
+                    income_time_ms = int(income_time_str)
+                    # 转换为datetime对象
+                    income_time_dt = TimeUtils.milliseconds_to_datetime(income_time_ms)
+                except ValueError:
+                    # 如果不是数字，尝试作为时间字符串解析
+                    try:
+                        # 支持多种常见的时间字符串格式
+                        formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]
+                        for fmt in formats:
+                            try:
+                                income_time_dt = datetime.strptime(income_time_str, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        else:
+                            raise ValueError("Unsupported time format")
+                    except ValueError:
+                        return jsonify({"errorcode": 400, "message": "时间格式错误，请使用毫秒级时间戳或有效的时间字符串", "data": None}), 400
+            else:
+                # 如果未提供时间，使用当前时间
+                income_time_dt = datetime.now()
             
             # 调用IncomeService的create_income方法
-            success, message, data = income_service.create_income(money, account_id, user_id, remark, income_time, income_type_id)
+            success, message, data = income_service.create_income(money, account_id, user_id, remark, income_time_dt, income_type_id, enable)
             
             if success:
                 api_logger.info(f"新增收入记录成功 - user_id: {user_id}, income_id: {data['id']}")
@@ -110,7 +137,31 @@ def setup_income_routes(app):
                 enable = enable.strip().lower() in ['true', '1', 'yes']
             if remark is not None and remark.strip() == "":
                 remark = None
-            if income_time is not None and income_time.strip() == "":
+            
+            # 处理时间参数 - 支持毫秒级时间戳或时间字符串
+            if income_time is not None and income_time.strip():
+                income_time_str = income_time.strip()
+                # 尝试解析为毫秒级时间戳
+                try:
+                    income_time_ms = int(income_time_str)
+                    # 转换为datetime对象
+                    income_time = TimeUtils.milliseconds_to_datetime(income_time_ms)
+                except ValueError:
+                    # 如果不是数字，尝试作为时间字符串解析
+                    try:
+                        # 支持多种常见的时间字符串格式
+                        formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]
+                        for fmt in formats:
+                            try:
+                                income_time = datetime.strptime(income_time_str, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        else:
+                            raise ValueError("Unsupported time format")
+                    except ValueError:
+                        return jsonify({"errorcode": 400, "message": "时间格式错误，请使用毫秒级时间戳或有效的时间字符串", "data": None}), 400
+            elif income_time is not None and income_time.strip() == "":
                 income_time = None
             
             # 调用IncomeService的update_income方法

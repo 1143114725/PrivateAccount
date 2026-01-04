@@ -5,7 +5,7 @@ class IncomeService:
     def __init__(self):
         self.income_dao = IncomeDAO()
 
-    def create_income(self, money, account_id, user_id, remark, income_time, income_type_id):
+    def create_income(self, money, account_id, user_id, remark, income_time, income_type_id, enable=True):
         if not all([money, account_id, user_id, income_time, income_type_id]):
             return False, "参数不能为空", None
         
@@ -13,7 +13,7 @@ class IncomeService:
             return False, "金额必须大于0", None
         
         try:
-            success, income_id = self.income_dao.create_income(money, account_id, user_id, remark, income_time, income_type_id)
+            success, income_id = self.income_dao.create_income(money, account_id, user_id, remark, income_time, income_type_id, enable)
             if success:
                 return True, "创建收入记录成功", {"id": income_id}
             else:

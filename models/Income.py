@@ -1,5 +1,6 @@
 from typing import Optional, List
 from models.BaseModel import BaseModel
+from utils.TimeUtils import TimeUtils
 
 
 class IncomeInfoModel:
@@ -39,8 +40,8 @@ class IncomeInfoModel:
             "account_id": self.account_id,
             "user_id": self.user_id,
             "remark": self.remark,
-            "income_time": self.income_time,
-            "create_time": self.create_time,
+            "income_time": TimeUtils.database_time_to_milliseconds(self.income_time),
+            "create_time": TimeUtils.database_time_to_milliseconds(self.create_time),
             "enable": self.enable,
             "income_type_id": self.income_type_id
         }

@@ -1,5 +1,6 @@
 from typing import Optional, List
 from models.BaseModel import BaseModel
+from utils.TimeUtils import TimeUtils
 
 
 class ExpendInfoModel:
@@ -39,8 +40,8 @@ class ExpendInfoModel:
             "account_id": self.account_id,
             "user_id": self.user_id,
             "remark": self.remark,
-            "expend_time": self.expend_time,
-            "create_time": self.create_time,
+            "expend_time": TimeUtils.database_time_to_milliseconds(self.expend_time),
+            "create_time": TimeUtils.database_time_to_milliseconds(self.create_time),
             "enable": self.enable,
             "expend_type_id": self.expend_type_id
         }

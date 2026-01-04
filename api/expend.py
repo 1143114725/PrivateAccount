@@ -3,6 +3,8 @@ from functools import wraps
 from services.ExpendService import ExpendService
 from utils.LogUtils import LogUtils
 from utils.AuthUtils import token_required
+from utils.TimeUtils import TimeUtils
+from datetime import datetime
 
 # 初始化API日志记录器
 api_logger = LogUtils.get_instance('API')
@@ -53,11 +55,36 @@ def setup_expend_routes(app):
                 enable = enable.strip().lower() in ['true', '1', 'yes']
             if remark is not None:
                 remark = remark.strip()
-            if expend_time is not None:
-                expend_time = expend_time.strip()
+            
+            # 处理时间参数 - 支持毫秒级时间戳或时间字符串
+            if expend_time is not None and expend_time.strip():
+                expend_time_str = expend_time.strip()
+                # 尝试解析为毫秒级时间戳
+                try:
+                    expend_time_ms = int(expend_time_str)
+                    # 转换为datetime对象
+                    expend_time_dt = TimeUtils.milliseconds_to_datetime(expend_time_ms)
+                except ValueError:
+                    # 如果不是数字，尝试作为时间字符串解析
+                    try:
+                        # 支持多种常见的时间字符串格式
+                        formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]
+                        for fmt in formats:
+                            try:
+                                expend_time_dt = datetime.strptime(expend_time_str, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        else:
+                            raise ValueError("Unsupported time format")
+                    except ValueError:
+                        return jsonify({"errorcode": 400, "message": "时间格式错误，请使用毫秒级时间戳或有效的时间字符串", "data": None}), 400
+            else:
+                # 如果未提供时间，使用当前时间
+                expend_time_dt = datetime.now()
             
             # 调用ExpendService的create_expend方法
-            success, message, data = expend_service.create_expend(money, account_id, user_id, remark, expend_time, expend_type_id)
+            success, message, data = expend_service.create_expend(money, account_id, user_id, remark, expend_time_dt, expend_type_id, enable)
             
             if success:
                 api_logger.info(f"新增支出记录成功 - user_id: {user_id}, expend_id: {data['id']}")
@@ -110,7 +137,31 @@ def setup_expend_routes(app):
                 enable = enable.strip().lower() in ['true', '1', 'yes']
             if remark is not None and remark.strip() == "":
                 remark = None
-            if expend_time is not None and expend_time.strip() == "":
+            
+            # 处理时间参数 - 支持毫秒级时间戳或时间字符串
+            if expend_time is not None and expend_time.strip():
+                expend_time_str = expend_time.strip()
+                # 尝试解析为毫秒级时间戳
+                try:
+                    expend_time_ms = int(expend_time_str)
+                    # 转换为datetime对象
+                    expend_time = TimeUtils.milliseconds_to_datetime(expend_time_ms)
+                except ValueError:
+                    # 如果不是数字，尝试作为时间字符串解析
+                    try:
+                        # 支持多种常见的时间字符串格式
+                        formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]
+                        for fmt in formats:
+                            try:
+                                expend_time = datetime.strptime(expend_time_str, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        else:
+                            raise ValueError("Unsupported time format")
+                    except ValueError:
+                        return jsonify({"errorcode": 400, "message": "时间格式错误，请使用毫秒级时间戳或有效的时间字符串", "data": None}), 400
+            elif expend_time is not None and expend_time.strip() == "":
                 expend_time = None
             
             # 调用ExpendService的update_expend方法
