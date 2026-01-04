@@ -37,22 +37,29 @@ def setup_income_routes(app):
         remark = request.form.get("remark", None)
         income_time = request.form.get("income_time", None)
         income_type_id = request.form.get("income_type_id", None)
-        enable = request.form.get("enable", None)
+        enable = request.form.get("enable", "True")
         
         # 记录新增收入请求
         api_logger.info(f"收到新增收入请求 - user_id: {user_id}, money: {money}, account_id: {account_id}, remark: {remark}, income_time: {income_time}, income_type_id: {income_type_id}, enable: {enable}")
         
         try:
             # 验证必填参数
-            if not money or not account_id or not income_type_id:
-                return jsonify({"errorcode": 400, "message": "参数不能为空", "data": None}), 400
+            missing_params = []
+            if not money:
+                missing_params.append("money")
+            if not account_id:
+                missing_params.append("account_id")
+            if not income_type_id:
+                missing_params.append("income_type_id")
+            
+            if missing_params:
+                return jsonify({"errorcode": 400, "message": f"参数 {', '.join(missing_params)} 不能为空", "data": None}), 400
             
             # 转换参数类型
             money = float(money.strip()) if money.strip() else None
             account_id = int(account_id.strip()) if account_id.strip() else None
             income_type_id = int(income_type_id.strip()) if income_type_id.strip() else None
-            if enable is not None:
-                enable = enable.strip().lower() in ['true', '1', 'yes']
+            enable = enable.strip().lower() in ['true', '1', 'yes']
             if remark is not None:
                 remark = remark.strip()
             

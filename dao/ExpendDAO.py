@@ -168,23 +168,19 @@ class ExpendDAO:
                         update_fields.append("expend_type_id = %s")
                         update_values.append(expend_type_id)
                     
+                    # 如果没有提供更新字段，直接提交事务并返回成功
                     if not update_fields:
-                        self.db.rollback()
-                        error_msg = "未提供任何更新字段"
-                        ExpendDAO.logger.warning(error_msg)
-                        return False, error_msg
+                        self.db.commit()
+                        ExpendDAO.logger.info("没有需要更新的字段，操作成功")
+                        return True, ""
                     
                     # 更新支出记录
                     update_query = f"UPDATE expend SET {', '.join(update_fields)} WHERE id = %s AND user_id = %s"
                     update_values.extend([expend_id, user_id])
                     self.db.cur.execute(update_query, tuple(update_values))
                     
-                    # 检查是否有行被修改
-                    if self.db.cur.rowcount == 0:
-                        self.db.rollback()
-                        error_msg = "支出记录不存在或不属于当前用户"
-                        ExpendDAO.logger.error(f"修改支出记录失败: {error_msg}")
-                        return False, error_msg
+                    # 不需要检查rowcount，因为我们已经确认记录存在
+                    # 即使没有实际更新任何行（内容相同），操作也是成功的
                     
                     # 更新账户余额
                     if original_account_id != new_account_id:

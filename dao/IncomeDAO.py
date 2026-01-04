@@ -149,21 +149,19 @@ class IncomeDAO:
                         update_fields.append("income_type_id = %s")
                         update_values.append(income_type_id)
                     
+                    # 如果没有提供更新字段，直接提交事务并返回成功
                     if not update_fields:
-                        self.db.rollback()
-                        IncomeDAO.logger.warning("未提供任何更新字段")
-                        return False
+                        self.db.commit()
+                        IncomeDAO.logger.info("没有需要更新的字段，操作成功")
+                        return True
                     
                     # 更新收入记录
                     update_query = f"UPDATE income SET {', '.join(update_fields)} WHERE id = %s AND user_id = %s"
                     update_values.extend([income_id, user_id])
                     self.db.cur.execute(update_query, tuple(update_values))
                     
-                    # 检查是否有行被修改
-                    if self.db.cur.rowcount == 0:
-                        self.db.rollback()
-                        IncomeDAO.logger.error(f"修改收入记录失败: 收入记录不存在或不属于当前用户")
-                        return False
+                    # 不需要检查rowcount，因为我们已经确认记录存在
+                    # 即使没有实际更新任何行（内容相同），操作也是成功的
                     
                     # 更新账户余额
                     if original_account_id != new_account_id:
