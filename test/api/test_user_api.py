@@ -184,7 +184,7 @@ def test_delete_account_success(mock_get_user, mock_delete_account, client):
     mock_delete_account.return_value = (True, "账号注销成功")
     
     # 发送注销账号请求
-    response = client.post('/api/delete_account', headers={
+    response = client.delete('/api/user', headers={
         'token': 'test_token_123',
         'userid': '1'
     })
@@ -214,7 +214,7 @@ def test_delete_account_failure(mock_get_user, mock_delete_account, client):
     mock_delete_account.return_value = (False, "用户不存在")
     
     # 发送注销账号请求
-    response = client.post('/api/delete_account', headers={
+    response = client.delete('/api/user', headers={
         'token': 'test_token_123',
         'userid': '1'
     })

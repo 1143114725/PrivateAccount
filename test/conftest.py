@@ -41,12 +41,14 @@ def mock_database():
     """
     创建模拟的数据库连接
     """
-    # 同时patch两个可能的导入路径
+    # 同时patch多个可能的导入路径
     with (patch('db.Database.Database') as mock_db_class,
-          patch('dao.ExpendTypeDAO.Database') as mock_dao_db_class):
+          patch('dao.ExpendTypeDAO.Database') as mock_expendtype_dao_db_class,
+          patch('dao.IncomeDAO.Database') as mock_income_dao_db_class):
         mock_db = Mock()
         mock_db_class.return_value = mock_db
-        mock_dao_db_class.return_value = mock_db
+        mock_expendtype_dao_db_class.return_value = mock_db
+        mock_income_dao_db_class.return_value = mock_db
         
         # 模拟数据库游标和连接
         mock_cursor = Mock()
@@ -72,7 +74,8 @@ def mock_database():
         mock_pool = Mock()
         mock_pool.connection.return_value = mock_conn
         mock_db_class.pool = mock_pool
-        mock_dao_db_class.pool = mock_pool
+        mock_expendtype_dao_db_class.pool = mock_pool
+        mock_income_dao_db_class.pool = mock_pool
         
         # 确保实例也能访问到pool
         mock_db.pool = mock_pool
@@ -186,5 +189,27 @@ def mock_expend_type_dao():
         mock_dao.get_all_expend_types.return_value = [(1, '餐饮', True, '2023-01-01 00:00:00'), (2, '交通', True, '2023-01-01 00:00:00')]
         mock_dao.update_expend_type.return_value = True
         mock_dao.delete_expend_type.return_value = True
+        
+        yield mock_dao
+
+
+@pytest.fixture(scope='function')
+def mock_income_dao():
+    """
+    创建模拟的IncomeDAO
+    """
+    # 同时patch两个可能的导入路径
+    with (patch('dao.IncomeDAO.IncomeDAO') as mock_dao_class,
+          patch('services.IncomeService.IncomeDAO') as mock_service_dao_class):
+        mock_dao = Mock()
+        mock_dao_class.return_value = mock_dao
+        mock_service_dao_class.return_value = mock_dao
+        
+        # 设置默认模拟返回值
+        mock_dao.create_income.return_value = (True, 1)
+        mock_dao.get_income_by_id.return_value = (1, 100, 1, 1, '测试收入', '2023-01-01 12:00:00', '2023-01-01 12:00:00', True, 1)
+        mock_dao.get_incomes_by_user_id.return_value = [(1, 100, 1, 1, '测试收入', '2023-01-01 12:00:00', '2023-01-01 12:00:00', True, 1)]
+        mock_dao.update_income.return_value = True
+        mock_dao.delete_income.return_value = True
         
         yield mock_dao

@@ -3,13 +3,13 @@ import signal
 import sys
 import logging
 from db.Database import Database
-from api.user import setup_routes
+from api.routes import setup_all_routes
 
 # 创建Flask应用实例
 app = Flask(__name__)
 
 # 设置路由
-setup_routes(app)
+setup_all_routes(app)
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

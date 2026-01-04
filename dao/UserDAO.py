@@ -81,7 +81,7 @@ class UserDAO:
         UserDAO.logger.info(f"注册新用户: {username} ({phone})")
         try:
             if self.db.connect():
-                insert_query = "INSERT INTO user (username, password, phone, enable, registration, refresh_token, token_expiration_time) VALUES (%s, %s, %s, TRUE, %s, NULL, NULL)"
+                insert_query = "INSERT INTO user (username, password, phone, enable, registration, refresh_token, token_expiration_time) VALUES (%s, %s, %s, 1, %s, NULL, NULL)"
                 if self.db.execute(insert_query, (username, encrypted_password, phone, registration_time)):
                     self.db.commit()
                     UserDAO.logger.info(f"用户{username}注册成功")

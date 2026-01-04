@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 CREATE TABLE IF NOT EXISTS `account` (
 	`id` BIGINT NOT NULL AUTO_INCREMENT UNIQUE,
 	`name` VARCHAR(255) COMMENT '账户名',
-	`balance` DECIMAL(10,2) COMMENT '账单余额',
+	`balance` DECIMAL(19,2) COMMENT '账单余额',
 	`user_id` BIGINT COMMENT '用户id',
 	PRIMARY KEY(`id`)
 ) COMMENT='账户表';
@@ -23,12 +23,12 @@ CREATE TABLE IF NOT EXISTS `account` (
 
 CREATE TABLE IF NOT EXISTS `income` (
 	`id` BIGINT NOT NULL AUTO_INCREMENT UNIQUE,
-	`money` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '金额',
+	`money` BIGINT NOT NULL DEFAULT 0 COMMENT '金额',
 	`account_id` BIGINT NOT NULL DEFAULT 0 COMMENT '账户id',
 	`user_id` BIGINT NOT NULL DEFAULT 0 COMMENT '人员id',
 	`remark` VARCHAR(255) COMMENT '备注',
 	`income_time` TIMESTAMP COMMENT '收入时间',
-	`create_time` TIMESTAMP COMMENT '创建时间',
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	`enable` BOOLEAN NOT NULL DEFAULT true COMMENT '是否可用',
 	`income_type_id` BIGINT COMMENT '消费类型id',
 	PRIMARY KEY(`id`)
@@ -37,16 +37,17 @@ CREATE TABLE IF NOT EXISTS `income` (
 
 CREATE TABLE IF NOT EXISTS `expend` (
 	`id` BIGINT NOT NULL AUTO_INCREMENT UNIQUE,
-	`money` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '金额',
+	`money` BIGINT NOT NULL DEFAULT 0 COMMENT '金额',
 	`account_id` BIGINT NOT NULL DEFAULT 0 COMMENT '账户id',
 	`user_id` BIGINT NOT NULL DEFAULT 0 COMMENT '人员id',
 	`remark` VARCHAR(255) COMMENT '备注',
 	`expend_time` TIMESTAMP COMMENT '支出时间',
-	`create_time` TIMESTAMP COMMENT '创建时间',
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	`enable` BOOLEAN NOT NULL DEFAULT true COMMENT '是否可用',
 	`consumption_id` BIGINT COMMENT '消费类型id',
 	PRIMARY KEY(`id`)
 ) COMMENT='支出表';
+
 
 CREATE TABLE IF NOT EXISTS `expend_type` (
 	`id` BIGINT NOT NULL AUTO_INCREMENT UNIQUE,
@@ -73,4 +74,3 @@ CREATE TABLE IF NOT EXISTS `config_version` (
 	`account_version` BIGINT NOT NULL COMMENT '账户表版本',
 	PRIMARY KEY(`id`)
 );
-

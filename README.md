@@ -15,8 +15,12 @@
 - ✅ 账户管理（添加、修改余额、删除、查询）
 - ✅ 消费类型管理（新增、修改、删除、查询）
 - ✅ 收入类型管理（新增、修改、删除、查询）
+- ✅ 支出记录管理（新增、修改、删除、查询）
+- ✅ 收入记录管理（新增、修改、删除、查询）
 - ✅ 余额支持两位小数精度，自动截断处理
 - ✅ 单元测试和集成测试
+- ✅ 支出记录与账户余额的事务一致性
+- ✅ 收入记录与账户余额的事务一致性
 
 ## 技术栈
 
@@ -36,7 +40,9 @@ PrivateAccount/
 │   ├── user.py            # 用户相关路由配置文件
 │   ├── account.py         # 账户管理路由配置文件
 │   ├── expendtype.py      # 消费类型路由配置文件
-│   └── incometype.py      # 收入类型路由配置文件
+│   ├── incometype.py      # 收入类型路由配置文件
+│   ├── expend.py          # 支出记录路由配置文件
+│   └── income.py          # 收入记录路由配置文件
 ├── config/                # 配置文件
 │   ├── DateBaseConfig.ini # 数据库配置
 │   └── LogConfig.ini      # 日志配置
@@ -44,7 +50,9 @@ PrivateAccount/
 │   ├── UserDAO.py         # 用户数据访问对象
 │   ├── AccountDAO.py      # 账户数据访问对象
 │   ├── ExpendTypeDAO.py   # 消费类型数据访问对象
-│   └── IncomeTypeDAO.py   # 收入类型数据访问对象
+│   ├── IncomeTypeDAO.py   # 收入类型数据访问对象
+│   ├── ExpendDAO.py       # 支出记录数据访问对象
+│   └── IncomeDAO.py       # 收入记录数据访问对象
 ├── db/                    # 数据库连接管理
 │   └── Database.py        # 数据库连接管理
 ├── logs/                  # 日志文件目录
@@ -53,12 +61,16 @@ PrivateAccount/
 │   ├── UserModel.py       # 用户相关模型
 │   ├── AccountModel.py    # 账户相关模型
 │   ├── expendtypemodel.py # 消费类型相关模型
-│   └── incometypemodel.py # 收入类型相关模型
+│   ├── incometypemodel.py # 收入类型相关模型
+│   ├── Expend.py          # 支出记录相关模型
+│   └── Income.py          # 收入记录相关模型
 ├── services/              # 业务逻辑层
 │   ├── UserService.py     # 用户服务类
 │   ├── AccountService.py  # 账户服务类
 │   ├── ExpendTypeService.py # 消费类型服务类
-│   └── IncomeTypeService.py # 收入类型服务类
+│   ├── IncomeTypeService.py # 收入类型服务类
+│   ├── ExpendService.py   # 支出记录服务类
+│   └── IncomeService.py   # 收入记录服务类
 ├── sql/                   # SQL脚本文件
 │   ├── create_tables.sql  # 创建表结构脚本
 │   └── init_db.py         # 初始化数据库脚本
@@ -576,6 +588,307 @@ python app.py
 }
 ```
 
+### 5. 支出记录管理模块
+
+#### 5.1 新增支出记录接口
+
+**URL**: `/api/expend`
+**方法**: `POST`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `money` (必须): 支出金额
+- `account_id` (必须): 账户ID
+- `expend_type_id` (必须): 支出类型ID
+- `remark` (可选): 支出备注
+- `expend_time` (可选): 支出时间（格式：YYYY-MM-DD HH:MM:SS）
+- `enable` (可选): 是否启用，默认为True
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "支出记录新增成功",
+  "data": {
+    "id": 1,
+    "money": 50.50,
+    "remark": "午餐",
+    "expend_time": "2024-01-01 12:00:00",
+    "account_id": 1,
+    "expend_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+#### 5.2 修改支出记录接口
+
+**URL**: `/api/expend/<int:id>`
+**方法**: `PUT`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `money` (可选): 支出金额
+- `account_id` (可选): 账户ID
+- `expend_type_id` (可选): 支出类型ID
+- `remark` (可选): 支出备注
+- `expend_time` (可选): 支出时间（格式：YYYY-MM-DD HH:MM:SS）
+- `enable` (可选): 是否启用
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "支出记录修改成功",
+  "data": {
+    "id": 1,
+    "money": 60.00,
+    "remark": "午餐",
+    "expend_time": "2024-01-01 12:00:00",
+    "account_id": 1,
+    "expend_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+#### 5.3 删除支出记录接口
+
+**URL**: `/api/expend/<int:id>`
+**方法**: `DELETE`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "支出记录删除成功",
+  "data": null
+}
+```
+
+#### 5.4 查询所有支出记录接口
+
+**URL**: `/api/expend`
+**方法**: `GET`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "查询支出记录成功",
+  "data": [
+    {
+      "id": 1,
+      "money": 50.50,
+      "remark": "午餐",
+      "expend_time": "2024-01-01 12:00:00",
+      "account_id": 1,
+      "expend_type_id": 1,
+      "create_time": "2024-01-01T00:00:00",
+      "enable": true
+    },
+    {
+      "id": 2,
+      "money": 100.00,
+      "remark": "购物",
+      "expend_time": "2024-01-02 14:00:00",
+      "account_id": 1,
+      "expend_type_id": 2,
+      "create_time": "2024-01-02T00:00:00",
+      "enable": true
+    }
+  ]
+}
+```
+
+#### 5.5 查询单个支出记录接口
+
+**URL**: `/api/expend/<int:id>`
+**方法**: `GET`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "查询支出记录成功",
+  "data": {
+    "id": 1,
+    "money": 50.50,
+    "remark": "午餐",
+    "expend_time": "2024-01-01 12:00:00",
+    "account_id": 1,
+    "expend_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+### 6. 收入记录管理模块
+
+#### 6.1 新增收入记录接口
+
+**URL**: `/api/income`
+**方法**: `POST`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `money` (必须): 收入金额
+- `account_id` (必须): 账户ID
+- `income_type_id` (必须): 收入类型ID
+- `remark` (可选): 收入备注
+- `income_time` (可选): 收入时间（格式：YYYY-MM-DD HH:MM:SS）
+- `enable` (可选): 是否启用，默认为True
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "收入记录新增成功",
+  "data": {
+    "id": 1,
+    "money": 5000.00,
+    "remark": "工资收入",
+    "income_time": "2024-01-01 09:00:00",
+    "account_id": 1,
+    "income_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+#### 6.2 修改收入记录接口
+
+**URL**: `/api/income/<int:id>`
+**方法**: `PUT`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**参数**:
+- `money` (可选): 收入金额
+- `account_id` (可选): 账户ID
+- `income_type_id` (可选): 收入类型ID
+- `remark` (可选): 收入备注
+- `income_time` (可选): 收入时间（格式：YYYY-MM-DD HH:MM:SS）
+- `enable` (可选): 是否启用
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "收入记录修改成功",
+  "data": {
+    "id": 1,
+    "money": 6000.00,
+    "remark": "工资收入（含奖金）",
+    "income_time": "2024-01-01 09:00:00",
+    "account_id": 1,
+    "income_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
+
+#### 6.3 删除收入记录接口
+
+**URL**: `/api/income/<int:id>`
+**方法**: `DELETE`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "收入记录删除成功",
+  "data": null
+}
+```
+
+#### 6.4 查询所有收入记录接口
+
+**URL**: `/api/income`
+**方法**: `GET`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "查询收入记录成功",
+  "data": [
+    {
+      "id": 1,
+      "money": 5000.00,
+      "remark": "工资收入",
+      "income_time": "2024-01-01 09:00:00",
+      "account_id": 1,
+      "income_type_id": 1,
+      "create_time": "2024-01-01T00:00:00",
+      "enable": true
+    },
+    {
+      "id": 2,
+      "money": 1000.00,
+      "remark": "奖金收入",
+      "income_time": "2024-01-02 10:00:00",
+      "account_id": 1,
+      "income_type_id": 2,
+      "create_time": "2024-01-02T00:00:00",
+      "enable": true
+    }
+  ]
+}
+```
+
+#### 6.5 查询单个收入记录接口
+
+**URL**: `/api/income/<int:id>`
+**方法**: `GET`
+**请求头**:
+- `token`: 用户认证令牌
+- `userid`: 用户ID
+
+**返回格式**:
+```json
+{
+  "errorcode": 200,
+  "message": "查询收入记录成功",
+  "data": {
+    "id": 1,
+    "money": 5000.00,
+    "remark": "工资收入",
+    "income_time": "2024-01-01 09:00:00",
+    "account_id": 1,
+    "income_type_id": 1,
+    "create_time": "2024-01-01T00:00:00",
+    "enable": true
+  }
+}
+```
 
 | 错误码 | 描述 |
 |-------|------|
