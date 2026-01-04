@@ -38,3 +38,6 @@ config/*.ini
 # Temporary files
 *.tmp
 *.temp
+
+# Test folders
+tst/
